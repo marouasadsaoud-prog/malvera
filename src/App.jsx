@@ -378,7 +378,13 @@ function AdminLogin({ T, onLogin, onBack }) {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState(false);
-  const handle = () => { if (email==="admin@malvera.com"&&pass==="malvera2024") onLogin(); else setErr(true); };
+  const handle = async () => {
+    setLoading(true);
+    const result = await sbAuth(email, pass);
+    setLoading(false);
+    if (result.success) onLogin(result.token);
+    else setErr(true);
+  };
   return (
     <div className="admin-login">
       <div className="login-card">
