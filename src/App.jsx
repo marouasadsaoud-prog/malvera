@@ -13,6 +13,16 @@ const sb = async (path, opts = {}) => {
       Prefer: "return=representation",
       ...opts.headers,
     },
+    const sbAuth = async (email, pass) => {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password: pass }),
+  });
+  const data = await res.json();
+  if (data.access_token) return { success: true, token: data.access_token };
+  return { success: false };
+};
     ...opts,
   });
   const text = await res.text();
@@ -401,7 +411,6 @@ function AdminLogin({ T, onLogin, onBack }) {
         {err && <p style={{color:"var(--red)",fontSize:"0.8rem",marginBottom:12}}>{T.adm_wrong}</p>}
         <button className="btn-primary" style={{width:"100%",padding:14,marginBottom:12}} onClick={handle}>{T.adm_signin}</button>
         <button className="btn-outline" style={{width:"100%",padding:10}} onClick={onBack}>{T.back}</button>
-        <p style={{marginTop:16,fontSize:"0.7rem",color:"var(--muted)"}}>admin@malvera.com / malvera2024</p>
       </div>
     </div>
   );
