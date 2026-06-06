@@ -13,7 +13,12 @@ const sb = async (path, opts = {}) => {
       Prefer: "return=representation",
       ...opts.headers,
     },
-    const sbAuth = async (email, pass) => {
+    ...opts,
+  });
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+};
+const sbAuth = async (email, pass) => {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
@@ -23,12 +28,6 @@ const sb = async (path, opts = {}) => {
   if (data.access_token) return { success: true, token: data.access_token };
   return { success: false };
 };
-    ...opts,
-  });
-  const text = await res.text();
-  return text ? JSON.parse(text) : [];
-};
-
 const WILAYAS = ["Adrar","Chlef","Laghouat","Oum El Bouaghi","Batna","Béjaïa","Biskra","Béchar","Blida","Bouira","Tamanrasset","Tébessa","Tlemcen","Tiaret","Tizi Ouzou","Alger","Djelfa","Jijel","Sétif","Saïda","Skikda","Sidi Bel Abbès","Annaba","Guelma","Constantine","Médéa","Mostaganem","M'Sila","Mascara","Ouargla","Oran","El Bayadh","Illizi","Bordj Bou Arréridj","Boumerdès","El Tarf","Tindouf","Tissemsilt","El Oued","Khenchela","Souk Ahras","Tipaza","Mila","Aïn Defla","Naâma","Aïn Témouchent","Ghardaïa","Relizane","Timimoun","Bordj Badji Mokhtar","Ouled Djellal","Béni Abbès","In Salah","In Guezzam","Touggourt","Djanet","El M'Ghair","El Meniaa"];
 const EMOJIS = {1:"✨",2:"🧼",3:"💋",4:"🥥",5:"🍑",6:"🤍",7:"🌿",8:"🍓",9:"🫧",10:"🌙"};
 const CAT_LABELS = { face:{en:"Face",ar:"الوجه"}, lip:{en:"Lip Care",ar:"العناية بالشفاه"}, body:{en:"Body",ar:"الجسم"}, hair:{en:"Hair",ar:"الشعر"} };
