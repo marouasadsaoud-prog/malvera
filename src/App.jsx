@@ -253,6 +253,7 @@ export default function App() {
         setProducts(prev => prev.map(p => p.id === prod.id ? {...p, stock: newStock} : p));
       }
       if (inserted[0]) setOrders(prev => [inserted[0], ...prev]);
+      tgNotify(`🛍️ <b>New Order!</b>\n👤 ${data.name}\n📞 ${data.phone}\n📦 ${data.productName} x${data.qty}\n📍 ${data.wilaya} - ${data.deliveryType==="stopdesk"?"Stop Desk":"Home Delivery"}`);
       setPage("confirm");
     } catch(e) { console.error(e); }
   };
