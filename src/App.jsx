@@ -52,7 +52,7 @@ h1,h2,h3{font-family:'Cormorant Garamond',serif;}
 .lang-btn{background:var(--mocha);color:var(--cream);border:none;cursor:pointer;padding:6px 14px;border-radius:20px;font-size:0.75rem;font-family:'Jost';transition:background 0.2s;}
 .lang-btn:hover{background:var(--mocha2);}
 .hero{min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--beige) 0%,var(--cream) 50%,var(--beige2) 100%);text-align:center;padding:60px 24px;position:relative;}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(201,169,110,0.13) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(74,55,40,0.07) 0%,transparent 50%);}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 30%,rgba(201,169,110,0.13) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(74,55,40,0.07) 0%,transparent 50%);pointer-events:none;}
 .hero-tag{font-size:0.72rem;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:20px;}
 .hero-title{font-size:clamp(3rem,8vw,6rem);font-weight:300;color:var(--mocha);line-height:1.05;margin-bottom:12px;font-style:italic;}
 .hero-title span{font-style:normal;font-weight:600;}
