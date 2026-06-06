@@ -356,19 +356,17 @@ export default function App() {
               <button className="btn-primary" onClick={()=>{setPage("home");setPreselected(null);}}>{T.conf_back}</button>
             </div>
           )}
-          <footer style={{background:"var(--mocha)",color:"rgba(255,255,255,0.5)",textAlign:"center",padding:"28px 24px",fontSize:"0.75rem",letterSpacing:"1px",marginTop:60}}>
-            <div style={{fontFamily:"Cormorant Garamond",fontSize:"1.1rem",color:"var(--gold2)",letterSpacing:"4px",marginBottom:8}}>MALVERA</div>
-            <div>Natural Cosmetics · Handcrafted with Love</div>
-            <div onClick={()=>{
-  if(!window._tap) window._tap={count:0,timer:null};
-  window._tap.count++;
-  clearTimeout(window._tap.timer);
-  window._tap.timer = setTimeout(()=>{window._tap.count=0;},1000);
-  if(window._tap.count>=5){window._tap.count=0;setPage("admin-login");}
-}} style={{marginTop:8,cursor:"default",userSelect:"none"}}>
-  <div style={{fontFamily:"Cormorant Garamond",fontSize:"1.1rem",color:"var(--gold2)",letterSpacing:"4px"}}>MALVERA</div>
-</div>
-          </footer>
+         <footer style={{background:"var(--mocha)",color:"rgba(255,255,255,0.5)",textAlign:"center",padding:"28px 24px",fontSize:"0.75rem",letterSpacing:"1px",marginTop:60}}>
+  <div style={{fontFamily:"Cormorant Garamond",fontSize:"1.1rem",color:"var(--gold2)",letterSpacing:"4px",marginBottom:8}}>MALVERA</div>
+  <div>Natural Cosmetics · Handcrafted with Love</div>
+  <div onClick={()=>{
+    if(!window._tap) window._tap={count:0,timer:null};
+    window._tap.count++;
+    clearTimeout(window._tap.timer);
+    window._tap.timer = setTimeout(()=>{window._tap.count=0;},1000);
+    if(window._tap.count>=3){window._tap.count=0;setPage("admin-login");}
+  }} style={{marginTop:8,height:24,cursor:"default",userSelect:"none"}} />
+</footer> 
         </div>
       )}
     </>
