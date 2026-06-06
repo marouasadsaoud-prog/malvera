@@ -286,6 +286,10 @@ if (updatedProduct && Number(stock) <= updatedProduct.threshold) {
     await sb(`ingredients?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ qty: Number(qty) }) });
     setIngredients(prev => prev.map(i => i.id===id ? {...i,qty:Number(qty)} : i));
   };
+  const updatedIng = ingredients.find(i=>i.id===id);
+if (updatedIng && Number(qty) <= updatedIng.threshold && updatedIng.threshold > 0) {
+  tgNotify(`⚠️ <b>Low Ingredient Alert!</b>\n🧪 ${updatedIng.name}\n🔢 Only ${qty}g left!`);
+}
   const updateIngThreshold = async (id, threshold) => {
     await sb(`ingredients?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ threshold: Number(threshold) }) });
     setIngredients(prev => prev.map(i => i.id===id ? {...i,threshold:Number(threshold)} : i));
