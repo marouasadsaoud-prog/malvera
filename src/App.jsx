@@ -301,7 +301,7 @@ export default function App() {
           <footer style={{background:"var(--mocha)",color:"rgba(255,255,255,0.5)",textAlign:"center",padding:"28px 24px",fontSize:"0.75rem",letterSpacing:"1px",marginTop:60}}>
             <div style={{fontFamily:"Cormorant Garamond",fontSize:"1.1rem",color:"var(--gold2)",letterSpacing:"4px",marginBottom:8}}>MALVERA</div>
             <div>Natural Cosmetics · Handcrafted with Love</div>
-            <button onClick={()=>setPage("admin-login")} style={{marginTop:12,background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.15)",fontSize:"0.65rem",letterSpacing:"1px"}}>admin</button>
+            <div onClick={()=>setPage("admin-login")} style={{marginTop:8,height:20,cursor:"default"}} />
           </footer>
         </div>
       )}
