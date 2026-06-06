@@ -2,6 +2,15 @@ import { useState, useEffect } from "react";
 
 const SUPABASE_URL = "https://oknqxjijpebnyogcpeee.supabase.co";
 const SUPABASE_KEY = "sb_publishable_f2GocL92eVimF-c3ugdnGQ_izZygETk";
+const TG_TOKEN = "8852249091:AAFeRA4zBd0gFAbyssou90wR-TCZFLi0Pn0";
+const TG_CHAT = "6269196175";
+const tgNotify = async (msg) => {
+  await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({chat_id: TG_CHAT, text: msg, parse_mode:"HTML"})
+  });
+};
 
 const sb = async (path, opts = {}) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
