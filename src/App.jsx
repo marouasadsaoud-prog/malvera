@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 
-
 const SUPABASE_URL = "https://oknqxjijpebnyogcpeee.supabase.co";
 const SUPABASE_KEY = "sb_publishable_f2GocL92eVimF-c3ugdnGQ_izZygETk";
 
@@ -18,6 +17,7 @@ const sb = async (path, opts = {}) => {
   const text = await res.text();
   return text ? JSON.parse(text) : [];
 };
+
 const sbAuth = async (email, pass) => {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
     method: "POST",
@@ -28,16 +28,74 @@ const sbAuth = async (email, pass) => {
   if (data.access_token) return { success: true, token: data.access_token };
   return { success: false };
 };
+
 const WILAYAS = ["Adrar","Chlef","Laghouat","Oum El Bouaghi","Batna","Béjaïa","Biskra","Béchar","Blida","Bouira","Tamanrasset","Tébessa","Tlemcen","Tiaret","Tizi Ouzou","Alger","Djelfa","Jijel","Sétif","Saïda","Skikda","Sidi Bel Abbès","Annaba","Guelma","Constantine","Médéa","Mostaganem","M'Sila","Mascara","Ouargla","Oran","El Bayadh","Illizi","Bordj Bou Arréridj","Boumerdès","El Tarf","Tindouf","Tissemsilt","El Oued","Khenchela","Souk Ahras","Tipaza","Mila","Aïn Defla","Naâma","Aïn Témouchent","Ghardaïa","Relizane","Timimoun","Bordj Badji Mokhtar","Ouled Djellal","Béni Abbès","In Salah","In Guezzam","Touggourt","Djanet","El M'Ghair","El Meniaa"];
+
+const ANDERSON_STOPDESKS = {
+  "Adrar":[{name:"Station Adrar",maps:"https://maps.app.goo.gl/e5kwRmwmo67GEwJ86"}],
+  "Chlef":[{name:"Station Chlef",maps:"https://maps.app.goo.gl/VTna2gw3i6KRQ9pD8"},{name:"Station Chlef Ténès",maps:""}],
+  "Laghouat":[{name:"Station Laghouat",maps:"https://maps.app.goo.gl/c6om88PyezNU3vmu9"},{name:"Station Laghouat New",maps:"https://maps.app.goo.gl/svydvVAmEqXkm8rh8"},{name:"Station Laghouat Aflou",maps:"https://maps.app.goo.gl/eCAEDjKLhXNzW9fq9"}],
+  "Oum El Bouaghi":[{name:"Station Oum El Bouaghi",maps:"https://maps.app.goo.gl/Za6dHPyzm6PH7uVL6"},{name:"Station Ain Fekroune",maps:"https://maps.app.goo.gl/JC1oRpVBQoaKVmrw7"},{name:"Station Ain M'Lila",maps:"https://maps.app.goo.gl/u4we5hCSTRjCUCXQ9"}],
+  "Batna":[{name:"Station Batna",maps:"https://maps.app.goo.gl/KxRNJQ535AwAwXJq8"},{name:"Station Batna Cité El Amrani",maps:"https://maps.app.goo.gl/WmCjZ7vRsJaTEZT98"}],
+  "Béjaïa":[{name:"Station Béjaïa",maps:"https://maps.app.goo.gl/oQh2eGmLEndBmzko7"},{name:"Station Béjaïa Akbou",maps:"https://maps.app.goo.gl/y2GjkFvx9CVChDRD6"},{name:"Station Béjaïa El Kseur",maps:"https://maps.app.goo.gl/yrZst9s8W6jxQkdE9"}],
+  "Biskra":[{name:"Station Biskra",maps:"https://maps.app.goo.gl/Zb8mzZEVf2wRPDK3A"}],
+  "Béchar":[{name:"Station Béchar",maps:"https://maps.app.goo.gl/jWbpQpHJSbKYwimD9"}],
+  "Blida":[{name:"Station Blida",maps:"https://maps.app.goo.gl/9UkBYddSCQkHGWob9"},{name:"Station Blida Boufarik",maps:"https://maps.app.goo.gl/zzBXZtyxBhUPxpvT8"},{name:"Station Blida El Affroune",maps:"https://maps.app.goo.gl/aoRXgowQryxe5Tg7"}],
+  "Bouira":[{name:"Station Bouira",maps:"https://maps.app.goo.gl/qiVHrJrei1jjaawF8"},{name:"Station Bouira Lakhdaria",maps:"https://maps.app.goo.gl/ciDiJvGR3RjppkNs6"}],
+  "Tamanrasset":[{name:"Station Tamanrasset",maps:"https://maps.app.goo.gl/9GoNzzXyLVLH6cz16"}],
+  "Tébessa":[{name:"Station Tébessa",maps:"https://maps.app.goo.gl/kFAD3nWmZoRYEAm4A"},{name:"Station Tébessa New",maps:"https://maps.app.goo.gl/EgBieZUDQ12Nme5f8"}],
+  "Tlemcen":[{name:"Station Tlemcen",maps:"https://maps.app.goo.gl/GGiswKszmE6bYzPQ9"},{name:"Station Maghnia",maps:"https://maps.app.goo.gl/iLdsZBsi6ZbL2KA76"}],
+  "Tiaret":[{name:"Station Tiaret",maps:"https://maps.app.goo.gl/mvNVfxXqY8xr4xj49"}],
+  "Tizi Ouzou":[{name:"Station Tizi Ouzou",maps:"https://maps.app.goo.gl/pCLrZaFtCznWWqf29"},{name:"Station Tizi Ouzou Azazga",maps:"https://maps.app.goo.gl/3BJ39ZeumQEhKhMa9"},{name:"Station Tizi Ouzou Nouvelle Ville",maps:"https://maps.app.goo.gl/v4Ts8yjjcbEo2Zjh7"},{name:"Station Tizi Ouzou Boughni",maps:"https://maps.app.goo.gl/ZYUdaJLdGG1Gp4Hw7"}],
+  "Alger":[{name:"Station Alger Chéraga",maps:"https://maps.app.goo.gl/jD53QqkD2wVU93jy7"},{name:"Station Alger Oued Smar",maps:"https://maps.app.goo.gl/8S9qyX46kn4hNNw97"},{name:"Station Alger Réghaïa",maps:"https://maps.app.goo.gl/kE4THbSgakgCQGHb8"},{name:"Station Alger Sacré Coeur",maps:"https://maps.app.goo.gl/NUBmFMNwPmxqsQfV6"},{name:"Station Alger Bab El Oued",maps:"https://maps.app.goo.gl/SxBsbZvt8VXe2t5S8"},{name:"Station Alger Aïn Benian",maps:"https://maps.app.goo.gl/PQgSKgTkWpPZTLzr7"},{name:"Station Alger Draria",maps:"https://maps.app.goo.gl/CQR9SqvnccWbKyB97"},{name:"Station Alger Alger Plage",maps:"https://maps.app.goo.gl/im6hVErQy6TEeorz8"},{name:"Station Alger Eucalyptus",maps:"https://maps.app.goo.gl/iCY3WvRU9pWgjkTy6"},{name:"Station Alger Dely Ibrahim",maps:"https://maps.app.goo.gl/LH7GSFidDz3RrosX6"},{name:"Station Alger Aïn Naâdja",maps:"https://maps.app.goo.gl/tRkiACfNVFVt5ueT9"},{name:"Station Alger Rouiba",maps:"https://maps.app.goo.gl/DDDCtGYrbu1pyLPLA"},{name:"Station Alger Sidi Abdellah",maps:"https://maps.app.goo.gl/hn6bMCBZ35TGY9zMA"},{name:"Station Alger Beb Ezouar",maps:"https://maps.app.goo.gl/V9a9ke24BxYvpkvRA"},{name:"Station Alger Kouba",maps:"https://maps.app.goo.gl/wKz2utPian7uNTht9"}],
+  "Djelfa":[{name:"Station Djelfa",maps:"https://maps.app.goo.gl/9C4QwgaSttFA2T7c6"},{name:"Station Djelfa Aïn Oussera",maps:"https://maps.app.goo.gl/yZXrbDdeaBojzH8D8"}],
+  "Jijel":[{name:"Station Jijel",maps:"https://maps.app.goo.gl/nQQBBrmDYRvAvfMn9"}],
+  "Sétif":[{name:"Station Sétif El Eulma",maps:"https://maps.app.goo.gl/ypgZ6TUDJxv7JWqY8"},{name:"Station Sétif El Hidab",maps:"https://maps.app.goo.gl/ArWGww1kgkYGUG5P6"},{name:"Station Sétif Aïn Oulmene",maps:"https://maps.app.goo.gl/2KVYz5joqYJnHaQw5"},{name:"Station Sétif Aïn Azal",maps:"https://maps.app.goo.gl/u56u2t78Soaninqy7"},{name:"Station Sétif Cité Bouaraoua",maps:""}],
+  "Saïda":[{name:"Station Saïda",maps:"https://maps.app.goo.gl/6uHbvmbbego1oVfo6"}],
+  "Skikda":[{name:"Station Skikda",maps:"https://maps.app.goo.gl/4xFfbBhoor9VSnkc6"}],
+  "Sidi Bel Abbès":[{name:"Station Sidi Bel Abbès",maps:"https://maps.app.goo.gl/xdU9XHedRHnPCRju5"},{name:"Station Sidi Bel Abbès Télagh",maps:"https://maps.app.goo.gl/NTZ1MKXD64emjDYy6"}],
+  "Annaba":[{name:"Station Annaba",maps:"https://maps.app.goo.gl/pHxuUpMnmLoMKqd68"},{name:"Station Annaba El Bouni",maps:"https://maps.app.goo.gl/gre9Drp5j1uvEgN3A"}],
+  "Guelma":[{name:"Station Guelma",maps:"https://maps.app.goo.gl/tTSeEUoca62gQi9P9"}],
+  "Constantine":[{name:"Station Constantine Ali Mendjeli",maps:"https://maps.app.goo.gl/49EkZL8DXf4UqzsP6"},{name:"Station Constantine Sidi Mebrouk",maps:"https://maps.app.goo.gl/MFQ82RvRQkzPVdWy9"}],
+  "Médéa":[{name:"Station Médéa",maps:"https://maps.app.goo.gl/dLxeUKbUFYkw9PCX7"}],
+  "Mostaganem":[{name:"Station Mostaganem",maps:"https://maps.app.goo.gl/ZS9zvoWn9vAD8U9r9"},{name:"Station Mostaganem 2",maps:"https://maps.app.goo.gl/P4fkjFt8vW3bp1bM8"}],
+  "M'Sila":[{name:"Station M'Sila",maps:""},{name:"Station M'Sila New",maps:"https://maps.app.goo.gl/dMK6rNSSYqpq5gJu8"},{name:"Station Bousaâda",maps:"https://maps.app.goo.gl/er7ddvJNfw3GpCQw7"}],
+  "Mascara":[{name:"Station Mascara",maps:"https://maps.app.goo.gl/Z24XWCbV2oANCVbq7"},{name:"Station Mascara Sig",maps:"https://maps.app.goo.gl/3BMsU1np9t2BtYBo8"}],
+  "Ouargla":[{name:"Station Ouargla",maps:"https://maps.app.goo.gl/3cMpoffssfm31eiz8"},{name:"Station Ouargla Hassi Messaoud",maps:"https://maps.app.goo.gl/1ujEcDGbz6UB55Zv8"}],
+  "Oran":[{name:"Station Oran Gambetta",maps:"https://maps.app.goo.gl/KFxhRwMhhNjXa5WV8"},{name:"Station Oran Haï Sabah",maps:"https://maps.app.goo.gl/cGHFG2kPkkssf9j18"},{name:"Station Oran Es Sénia Maraval",maps:"https://maps.app.goo.gl/WBypYcM1iuCrKHGn6"},{name:"Station Oran Khemisti Marsa El Kébir",maps:"https://maps.app.goo.gl/8LNi1FiDYaVBxZMPA"},{name:"Station Oran Aïn Turk",maps:"https://maps.app.goo.gl/j8rSVQ6PgxK3rrgJ6"}],
+  "El Bayadh":[{name:"Station El Bayadh",maps:"https://maps.app.goo.gl/txCe86XDL3cHci8c9"}],
+  "Illizi":[{name:"Station Illizi",maps:"https://maps.app.goo.gl/Nq9sb3qgDLskXKix8"},{name:"Station In Amenas",maps:""},{name:"Station Aïn Amenas New",maps:"https://maps.app.goo.gl/f1vuk2pHrtFHaNeUA"}],
+  "Bordj Bou Arréridj":[{name:"Station Bordj Bou Arréridj",maps:"https://maps.app.goo.gl/dnG3sGzVRcm7b3MD7"}],
+  "Boumerdès":[{name:"Station Boumerdès",maps:"https://maps.app.goo.gl/urE5qh6KxE61wCfj6"},{name:"Station Boumerdès Borj Ménaïel",maps:"https://maps.app.goo.gl/5y8U7jN9VFYTskkS9"},{name:"Station Dellys",maps:"https://maps.app.goo.gl/CcrypFG8Gd2D7eDy7"}],
+  "El Tarf":[{name:"Station El Tarf",maps:""},{name:"Station El Tarf New",maps:"https://maps.app.goo.gl/YDQBYdGeSP8weZrg7"}],
+  "Tissemsilt":[{name:"Station Tissemsilt",maps:"https://maps.app.goo.gl/4HCw7MarbhkdPVgv8"},{name:"Station Tissemsilt Bordj Bounaama",maps:"https://maps.app.goo.gl/i8Pbrfe74Nt82ySU8"}],
+  "El Oued":[{name:"Station El Oued",maps:"https://maps.app.goo.gl/Jx3z31EAujW6yhv26"}],
+  "Khenchela":[{name:"Station Khenchela",maps:"https://maps.app.goo.gl/JE8LxXYjUoRJj8y46"}],
+  "Souk Ahras":[{name:"Station Souk Ahras",maps:"https://maps.app.goo.gl/m8WVP29QPG5eGe7N7"}],
+  "Tipaza":[{name:"Station Tipaza",maps:"https://maps.app.goo.gl/fZHRJeWMyUee3Azo9"},{name:"Station Tipaza Hadjout",maps:"https://maps.app.goo.gl/wpQ88PXZcuSvvNfD6"},{name:"Station Tipaza Koléa",maps:"https://maps.app.goo.gl/TLDwxR7uHzG2gnyC7"}],
+  "Mila":[{name:"Station Mila",maps:"https://maps.app.goo.gl/cLN3rESG2BBKMdPS7"},{name:"Station Chelghoum Laïd",maps:"https://maps.app.goo.gl/4MiiEt1X7d8KuBxe6"}],
+  "Aïn Defla":[{name:"Station Aïn Defla",maps:"https://maps.app.goo.gl/dDaPGzzFH5WXGqWk7"},{name:"Station Aïn Defla Khemis Miliana",maps:"https://maps.app.goo.gl/akVWFicGBacivrb56"}],
+  "Naâma":[{name:"Station Naâma Méchria",maps:"https://maps.app.goo.gl/cVUPoUNaWxcrEwk87"}],
+  "Aïn Témouchent":[{name:"Station Aïn Témouchent",maps:"https://maps.app.goo.gl/1BdnjT4zLTRGCSGr7"},{name:"Station Aïn Témouchent Béni Saf",maps:"https://maps.app.goo.gl/yW9wKpYXD8G1c8dX9"}],
+  "Ghardaïa":[{name:"Station Ghardaïa",maps:"https://maps.app.goo.gl/cXud7e3msezqYtVQ7"}],
+  "Relizane":[{name:"Station Relizane",maps:"https://maps.app.goo.gl/7221SR9vbvVhwV6QA"},{name:"Station Relizane Oued Rhiou",maps:"https://maps.app.goo.gl/GyEbfZNGoaH5MXJj6"}],
+  "Ouled Djellal":[{name:"Station Ouled Djellal",maps:"https://maps.app.goo.gl/6sfe8AAdziro5qne6"}],
+  "In Salah":[{name:"Station In Salah",maps:"https://maps.app.goo.gl/L5tCxgovXucPoNhX9"}],
+  "Touggourt":[{name:"Station Touggourt",maps:"https://maps.app.goo.gl/7ZzXboGXpcMBpcEq9"}],
+  "Djanet":[{name:"Station Djanet",maps:"https://maps.app.goo.gl/Sub9C3s8ByQRZRy56"},{name:"Station Djanet New",maps:"https://maps.app.goo.gl/huPNCpPsL8eYfkfj6"}],
+  "El M'Ghair":[{name:"Station El M'Ghair",maps:"https://maps.app.goo.gl/yPERLTuVt166JXPD9"}]
+};
+const STOPDESK_WILAYAS = Object.keys(ANDERSON_STOPDESKS);
+
 const EMOJIS = {1:"✨",2:"🧼",3:"💋",4:"🥥",5:"🍑",6:"🤍",7:"🌿",8:"🍓",9:"🫧",10:"🌙"};
 const CAT_LABELS = { face:{en:"Face",ar:"الوجه"}, lip:{en:"Lip Care",ar:"العناية بالشفاه"}, body:{en:"Body",ar:"الجسم"}, hair:{en:"Hair",ar:"الشعر"} };
 const PriceDisplay = ({price, discount_price}) => discount_price ? (<span><span style={{textDecoration:"line-through",color:"var(--muted)",fontSize:"0.85rem",marginRight:8}}>{price}</span><span style={{color:"var(--red)",fontWeight:600}}>{discount_price}</span></span>) : <span>{price}</span>;
 
 const TR = {
-  en:{nav_home:"Home",nav_catalog:"Catalog",nav_order:"Order",hero_cta:"Explore Collection",hero_sub:"Pure. Natural. Handcrafted.",v_natural:"Natural",v_handmade:"Handmade",v_trad:"Traditional",v_tallow:"Tallow-Based",cat_title:"Our Collection",f_all:"All",f_face:"Face",f_lip:"Lip Care",f_body:"Body",f_hair:"Hair",order_btn:"Order Now",details_btn:"View Details",back:"← Back",order_title:"Place Your Order",f_name:"Full Name",f_phone:"Phone Number",f_wilaya:"Wilaya",f_addr:"Delivery Address",f_product:"Product",f_qty:"Quantity",sel_wilaya:"Select your wilaya",sel_product:"Select a product",submit:"Place Order",conf_title:"Order Received!",conf_msg:"Thank you! We will contact you shortly to confirm your order.",conf_back:"Back to Shop",brand_desc:"At Malvera, we believe in timeless beauty rooted in tradition. Every product is handcrafted with pure, natural ingredients — centered around the power of beef tallow — to nourish, strengthen, and restore balance to your skin, lips, and hair.",adm_login:"Admin Login",adm_email:"Email",adm_pass:"Password",adm_signin:"Sign In",adm_wrong:"Invalid credentials",adm_orders:"Orders",adm_products:"Product Stock",adm_ing:"Ingredients",adm_logout:"Logout",s_pending:"Pending",s_confirmed:"Confirmed",s_delivered:"Delivered",low_stock:"Low Stock",save:"Save",search:"Search...",c_name:"Customer",c_product:"Product",c_qty:"Qty",c_wilaya:"Wilaya",c_phone:"Phone",c_date:"Date",c_status:"Status",no_orders:"No orders yet.",threshold:"Alert (g)",stock_qty:"Stock",loading:"Loading..."},
-  ar:{nav_home:"الرئيسية",nav_catalog:"المنتجات",nav_order:"اطلب الآن",hero_ctu:"اكتشفي المجموعة",hero_sub:"طبيعي. نقي. صنع بالحب.",v_natural:"طبيعي",v_handmade:"صنع يدوي",v_trad:"تراثي",v_tallow:"زبدة الشحم",cat_title:"مجموعتنا",f_all:"الكل",f_face:"الوجه",f_lip:"العناية بالشفاه",f_body:"الجسم",f_hair:"الشعر",order_btn:"اطلبي الآن",details_btn:"عرض التفاصيل",back:"→ رجوع",order_title:"أرسلي طلبك",f_name:"الاسم الكامل",f_phone:"رقم الهاتف",f_wilaya:"الولاية",f_addr:"عنوان التوصيل",f_product:"المنتج",f_qty:"الكمية",sel_wilaya:"اختاري ولايتك",sel_product:"اختاري منتجاً",submit:"إرسال الطلب",conf_title:"تم استلام طلبك!",conf_msg:"شكراً لكِ! سنتواصل معكِ قريباً لتأكيد طلبك.",conf_back:"العودة للمتجر",brand_desc:"في Malvera، نؤمن بالجمال الخالد المستوحى من الموروث. كل منتج مصنوع يدوياً من مكونات طبيعية خالصة — في قلبها شحم البقر — لتغذية بشرتكِ وشعركِ وشفاهكِ وإعادة توازنها.",adm_login:"تسجيل الدخول",adm_email:"البريد",adm_pass:"كلمة المرور",adm_signin:"دخول",adm_wrong:"بيانات غير صحيحة",adm_orders:"الطلبات",adm_products:"مخزون المنتجات",adm_ing:"المكونات",adm_logout:"خروج",s_pending:"قيد الانتظار",s_confirmed:"مؤكد",s_delivered:"تم التوصيل",low_stock:"مخزون منخفض",save:"حفظ",search:"بحث...",c_name:"العميلة",c_product:"المنتج",c_qty:"الكمية",c_wilaya:"الولاية",c_phone:"الهاتف",c_date:"التاريخ",c_status:"الحالة",no_orders:"لا توجد طلبات بعد.",threshold:"حد التنبيه",stock_qty:"الكمية",loading:"جاري التحميل..."}
+  en:{nav_home:"Home",nav_catalog:"Catalog",nav_order:"Order",hero_cta:"Explore Collection",hero_sub:"Pure. Natural. Handcrafted.",v_natural:"Natural",v_handmade:"Handmade",v_trad:"Traditional",v_tallow:"Tallow-Based",cat_title:"Our Collection",f_all:"All",f_face:"Face",f_lip:"Lip Care",f_body:"Body",f_hair:"Hair",order_btn:"Order Now",details_btn:"View Details",back:"← Back",order_title:"Place Your Order",f_name:"Full Name",f_phone:"Phone Number",f_wilaya:"Wilaya",f_addr:"Delivery Address",f_product:"Product",f_qty:"Quantity",sel_wilaya:"Select your wilaya",sel_product:"Select a product",submit:"Place Order",conf_title:"Order Received!",conf_msg:"Thank you! We will contact you shortly to confirm your order.",conf_back:"Back to Shop",brand_desc:"At Malvera, we believe in timeless beauty rooted in tradition. Every product is handcrafted with pure, natural ingredients — centered around the power of beef tallow — to nourish, strengthen, and restore balance to your skin, lips, and hair.",adm_login:"Admin Login",adm_email:"Email",adm_pass:"Password",adm_signin:"Sign In",adm_wrong:"Invalid credentials",adm_orders:"Orders",adm_products:"Product Stock",adm_ing:"Ingredients",adm_logout:"Logout",s_pending:"Pending",s_confirmed:"Confirmed",s_delivered:"Delivered",low_stock:"Low Stock",save:"Save",search:"Search...",c_name:"Customer",c_product:"Product",c_qty:"Qty",c_wilaya:"Wilaya",c_phone:"Phone",c_date:"Date",c_status:"Status",no_orders:"No orders yet.",threshold:"Alert (g)",stock_qty:"Stock",loading:"Loading...",del_type:"Delivery Type",del_home:"Home Delivery",del_stop:"Stop Desk",f_commune:"Commune",f_stopdesk:"Select Stop Desk",sel_commune:"Select your commune",sel_stopdesk:"Select a stop desk",view_map:"View on map"},
+  ar:{nav_home:"الرئيسية",nav_catalog:"المنتجات",nav_order:"اطلب الآن",hero_cta:"اكتشفي المجموعة",hero_sub:"طبيعي. نقي. صنع بالحب.",v_natural:"طبيعي",v_handmade:"صنع يدوي",v_trad:"تراثي",v_tallow:"زبدة الشحم",cat_title:"مجموعتنا",f_all:"الكل",f_face:"الوجه",f_lip:"العناية بالشفاه",f_body:"الجسم",f_hair:"الشعر",order_btn:"اطلبي الآن",details_btn:"عرض التفاصيل",back:"→ رجوع",order_title:"أرسلي طلبك",f_name:"الاسم الكامل",f_phone:"رقم الهاتف",f_wilaya:"الولاية",f_addr:"عنوان التوصيل",f_product:"المنتج",f_qty:"الكمية",sel_wilaya:"اختاري ولايتك",sel_product:"اختاري منتجاً",submit:"إرسال الطلب",conf_title:"تم استلام طلبك!",conf_msg:"شكراً لكِ! سنتواصل معكِ قريباً لتأكيد طلبك.",conf_back:"العودة للمتجر",brand_desc:"في Malvera، نؤمن بالجمال الخالد المستوحى من الموروث. كل منتج مصنوع يدوياً من مكونات طبيعية خالصة — في قلبها شحم البقر — لتغذية بشرتكِ وشعركِ وشفاهكِ وإعادة توازنها.",adm_login:"تسجيل الدخول",adm_email:"البريد",adm_pass:"كلمة المرور",adm_signin:"دخول",adm_wrong:"بيانات غير صحيحة",adm_orders:"الطلبات",adm_products:"مخزون المنتجات",adm_ing:"المكونات",adm_logout:"خروج",s_pending:"قيد الانتظار",s_confirmed:"مؤكد",s_delivered:"تم التوصيل",low_stock:"مخزون منخفض",save:"حفظ",search:"بحث...",c_name:"العميلة",c_product:"المنتج",c_qty:"الكمية",c_wilaya:"الولاية",c_phone:"الهاتف",c_date:"التاريخ",c_status:"الحالة",no_orders:"لا توجد طلبات بعد.",threshold:"حد التنبيه",stock_qty:"الكمية",loading:"جاري التحميل...",del_type:"نوع التوصيل",del_home:"توصيل للمنزل",del_stop:"نقطة توقف",f_commune:"البلدية",f_stopdesk:"اختاري نقطة التوقف",sel_commune:"اختاري بلديتك",sel_stopdesk:"اختاري نقطة التوقف",view_map:"عرض على الخريطة"}
 };
-  const CSS = `
+const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{--beige:#f5ede0;--beige2:#ede0cc;--cream:#faf6f0;--mocha:#4a3728;--mocha2:#6b4f3a;--gold:#c9a96e;--gold2:#e8c98a;--text:#2d1f14;--muted:#8a7060;--red:#c0392b;--orange:#e67e22;--white:#ffffff;--shadow:0 4px 24px rgba(74,55,40,0.10);--shadow2:0 2px 8px rgba(74,55,40,0.08);}
@@ -178,7 +236,7 @@ export default function App() {
 
   const handleOrder = async (data) => {
     try {
-      const inserted = await sb("orders", { method:"POST", body: JSON.stringify({ name:data.name, phone:data.phone, wilaya:data.wilaya, address:data.address, product_name:data.productName, product_id:data.productId, qty:data.qty, status:"pending" }) });
+      const inserted = await sb("orders", { method:"POST", body: JSON.stringify({ name:data.name, phone:data.phone, wilaya:data.wilaya, address:data.deliveryType==="stopdesk"?data.stopdesk:data.address, commune:data.commune||null, delivery_type:data.deliveryType, product_name:data.productName, product_id:data.productId, qty:data.qty, status:"pending" }) });
       const prod = products.find(p => p.id === data.productId);
       if (prod) {
         const newStock = Math.max(0, prod.stock - data.qty);
@@ -301,7 +359,7 @@ export default function App() {
           <footer style={{background:"var(--mocha)",color:"rgba(255,255,255,0.5)",textAlign:"center",padding:"28px 24px",fontSize:"0.75rem",letterSpacing:"1px",marginTop:60}}>
             <div style={{fontFamily:"Cormorant Garamond",fontSize:"1.1rem",color:"var(--gold2)",letterSpacing:"4px",marginBottom:8}}>MALVERA</div>
             <div>Natural Cosmetics · Handcrafted with Love</div>
-            <div onClick={()=>setPage("admin-login")} style={{marginTop:8,height:20,cursor:"default"}} />
+            <button onClick={()=>setPage("admin-login")} style={{marginTop:12,background:"none",border:"none",cursor:"pointer",color:"rgba(255,255,255,0.15)",fontSize:"0.65rem",letterSpacing:"1px"}}>admin</button>
           </footer>
         </div>
       )}
@@ -342,10 +400,15 @@ function CatalogPage({ T, lang, products, onOrder, onDetail }) {
 }
 
 function OrderPage({ T, products, preselected, onSubmit, onBack }) {
-  const [form, setForm] = useState({name:"",phone:"",wilaya:"",address:"",productId:preselected?.id||"",qty:1});
+  const [form, setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home",productId:preselected?.id||"",qty:1});
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  const isStopdesk = form.deliveryType === "stopdesk";
+  const availableStopdesks = form.wilaya && ANDERSON_STOPDESKS[form.wilaya] ? ANDERSON_STOPDESKS[form.wilaya] : [];
+  const selectedStopdesk = availableStopdesks.find(s=>s.name===form.stopdesk);
   const handle = () => {
-    if (!form.name||!form.phone||!form.wilaya||!form.address||!form.productId) return;
+    if (!form.name||!form.phone||!form.wilaya||!form.productId) return;
+    if (isStopdesk && !form.stopdesk) return;
+    if (!isStopdesk && !form.address) return;
     const prod = products.find(p=>p.id===Number(form.productId));
     onSubmit({...form, productId:Number(form.productId), productName:prod?.name, qty:Number(form.qty)});
   };
@@ -354,19 +417,56 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
       <button className="back-btn" onClick={onBack}>{T.back}</button>
       <h2 className="order-title">{T.order_title}</h2>
       <div className="section-line" style={{marginBottom:32}} />
-      {[["name",T.f_name,"text"],["phone",T.f_phone,"tel"],["address",T.f_addr,"text"]].map(([k,l,type])=>(
+      {[["name",T.f_name,"text"],["phone",T.f_phone,"tel"]].map(([k,l,type])=>(
         <div className="form-group" key={k}>
           <label className="form-label">{l} *</label>
           <input className="form-input" type={type} value={form[k]} onChange={e=>set(k,e.target.value)} />
         </div>
       ))}
       <div className="form-group">
+        <label className="form-label">{T.del_type} *</label>
+        <div style={{display:"flex",gap:12}}>
+          <button type="button" onClick={()=>set("deliveryType","home")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="home"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="home"?"var(--mocha)":"var(--white)",color:form.deliveryType==="home"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>
+            🏠 {T.del_home}
+          </button>
+          <button type="button" onClick={()=>set("deliveryType","stopdesk")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="stopdesk"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="stopdesk"?"var(--mocha)":"var(--white)",color:form.deliveryType==="stopdesk"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>
+            🏢 {T.del_stop}
+          </button>
+        </div>
+      </div>
+      <div className="form-group">
         <label className="form-label">{T.f_wilaya} *</label>
-        <select className="form-select" value={form.wilaya} onChange={e=>set("wilaya",e.target.value)}>
+        <select className="form-select" value={form.wilaya} onChange={e=>{set("wilaya",e.target.value);set("stopdesk","");set("commune","");}}>
           <option value="">{T.sel_wilaya}</option>
-          {WILAYAS.map(w=><option key={w} value={w}>{w}</option>)}
+          {(isStopdesk ? STOPDESK_WILAYAS : WILAYAS).map(w=><option key={w} value={w}>{w}</option>)}
         </select>
       </div>
+      {isStopdesk && form.wilaya && (
+        <div className="form-group">
+          <label className="form-label">{T.f_stopdesk} *</label>
+          <select className="form-select" value={form.stopdesk} onChange={e=>set("stopdesk",e.target.value)}>
+            <option value="">{T.sel_stopdesk}</option>
+            {availableStopdesks.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+          </select>
+          {selectedStopdesk?.maps && (
+            <a href={selectedStopdesk.maps} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:8,fontSize:"0.78rem",color:"var(--gold)",letterSpacing:"1px"}}>
+              📍 {T.view_map}
+            </a>
+          )}
+        </div>
+      )}
+      {!isStopdesk && (
+        <>
+          <div className="form-group">
+            <label className="form-label">{T.f_commune} *</label>
+            <input className="form-input" value={form.commune} onChange={e=>set("commune",e.target.value)} placeholder={T.sel_commune} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">{T.f_addr} *</label>
+            <input className="form-input" value={form.address} onChange={e=>set("address",e.target.value)} />
+          </div>
+        </>
+      )}
       <div className="form-group">
         <label className="form-label">{T.f_product} *</label>
         <select className="form-select" value={form.productId} onChange={e=>set("productId",e.target.value)}>
@@ -474,12 +574,14 @@ function OrdersTab({ T, orders, onUpdateStatus }) {
       {filtered.length===0 ? <p style={{color:"var(--muted)",padding:"20px 0"}}>{T.no_orders}</p> : (
         <div style={{overflowX:"auto"}}>
           <table>
-            <thead><tr><th>{T.c_name}</th><th>{T.c_product}</th><th>{T.c_qty}</th><th>{T.c_wilaya}</th><th>{T.c_phone}</th><th>{T.c_date}</th><th>{T.c_status}</th></tr></thead>
+            <thead><tr><th>{T.c_name}</th><th>{T.c_product}</th><th>{T.c_qty}</th><th>{T.c_wilaya}</th><th>Delivery</th><th>{T.c_phone}</th><th>{T.c_date}</th><th>{T.c_status}</th></tr></thead>
             <tbody>
               {filtered.map(o=>(
                 <tr key={o.id}>
-                  <td><strong>{o.name}</strong><br/><span style={{fontSize:"0.75rem",color:"var(--muted)"}}>{o.address}</span></td>
-                  <td>{o.product_name}</td><td>{o.qty}</td><td>{o.wilaya}</td><td>{o.phone}</td>
+                  <td><strong>{o.name}</strong><br/><span style={{fontSize:"0.75rem",color:"var(--muted)"}}>{o.commune&&`${o.commune} - `}{o.address}</span></td>
+                  <td>{o.product_name}</td><td>{o.qty}</td><td>{o.wilaya}</td>
+                  <td><span className={`badge ${o.delivery_type==="stopdesk"?"badge-confirmed":"badge-pending"}`}>{o.delivery_type==="stopdesk"?"Stop Desk":"Home"}</span></td>
+                  <td>{o.phone}</td>
                   <td style={{fontSize:"0.8rem",color:"var(--muted)"}}>{new Date(o.created_at).toLocaleString()}</td>
                   <td>
                     <select className="status-select" value={o.status} onChange={e=>onUpdateStatus(o.id,e.target.value)}>
