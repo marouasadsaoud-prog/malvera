@@ -382,11 +382,11 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
     </div>
   );
 }
-
 function AdminLogin({ T, onLogin, onBack }) {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState(false);
+  const [loading, setLoading] = useState(false);
   const handle = async () => {
     setLoading(true);
     const result = await sbAuth(email, pass);
@@ -408,7 +408,7 @@ function AdminLogin({ T, onLogin, onBack }) {
           <input className="form-input" type="password" value={pass} onChange={e=>{setPass(e.target.value);setErr(false);}} onKeyDown={e=>e.key==="Enter"&&handle()} />
         </div>
         {err && <p style={{color:"var(--red)",fontSize:"0.8rem",marginBottom:12}}>{T.adm_wrong}</p>}
-        <button className="btn-primary" style={{width:"100%",padding:14,marginBottom:12}} onClick={handle}>{T.adm_signin}</button>
+        <button className="btn-primary" style={{width:"100%",padding:14,marginBottom:12}} onClick={handle} disabled={loading}>{loading ? "..." : T.adm_signin}</button>
         <button className="btn-outline" style={{width:"100%",padding:10}} onClick={onBack}>{T.back}</button>
       </div>
     </div>
