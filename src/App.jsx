@@ -615,11 +615,14 @@ function OrdersTab({ T, orders, onUpdateStatus, onDeleteOrder }) {
                   <td>{o.phone}</td>
                   <td style={{fontSize:"0.8rem",color:"var(--muted)"}}>{new Date(o.created_at).toLocaleString()}</td>
                   <td>
-                    <select className="status-select" value={o.status} onChange={e=>onUpdateStatus(o.id,e.target.value)}>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                    <select className="status-select" value={o.status} onChange={e=>onUpdateStatus(o.id,e.target.value)} style={{background:o.status==="confirmed"?"#d1edff":o.status==="delivered"?"#d4edda":"#fef3cd",color:o.status==="confirmed"?"#0a5a8a":o.status==="delivered"?"#155724":"#856404",fontWeight:500}}>
                       <option value="pending">{T.s_pending}</option>
                       <option value="confirmed">{T.s_confirmed}</option>
                       <option value="delivered">{T.s_delivered}</option>
                     </select>
+                    <button onClick={()=>{if(window.confirm("Delete this order?")) onDeleteOrder(o.id);}} style={{background:"#fde8e8",color:"var(--red)",border:"none",cursor:"pointer",padding:"4px 10px",borderRadius:3,fontSize:"0.75rem",fontFamily:"Jost"}}>🗑️</button>
+                    </div>
                   </td>
                 </tr>
               ))}
