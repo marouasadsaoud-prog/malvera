@@ -319,7 +319,8 @@ export default function App() {
           onUpdateOrderStatus={updateOrderStatus} onUpdateProductStock={updateProductStock} onUpdateProductThreshold={updateProductThreshold}
           onUpdateIngQty={updateIngQty} onUpdateIngThreshold={updateIngThreshold}
           onUpdateProductPrice={updateProductPrice} onUpdateProductDiscount={updateProductDiscount}
-          onLogout={()=>{setIsAdmin(false);setPage("home");}} />
+          onDeleteOrder={deleteOrder}
+          onLogout={()=>{setIsAdmin(false);setPage("home");}}/>
       )}
       {!["admin-login","admin"].includes(page) && (
         <div className={lang==="ar"?"rtl":"ltr"}>
