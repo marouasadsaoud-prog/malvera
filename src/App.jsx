@@ -546,7 +546,7 @@ function AdminLogin({ T, onLogin, onBack }) {
   );
 }
 
-function AdminDashboard({ T, tab, setTab, orders, products, ingredients, onUpdateOrderStatus, onUpdateProductStock, onUpdateProductThreshold, onUpdateIngQty, onUpdateIngThreshold, onUpdateProductPrice, onUpdateProductDiscount, onLogout }) {
+function AdminDashboard({ T, tab, setTab, orders, products, ingredients, onUpdateOrderStatus, onUpdateProductStock, onUpdateProductThreshold, onUpdateIngQty, onUpdateIngThreshold, onUpdateProductPrice, onUpdateProductDiscount, onDeleteOrder, onLogout }) {
   const lowP = products.filter(p=>p.stock<=p.threshold).length;
   const lowI = ingredients.filter(i=>i.threshold>0&&i.qty<=i.threshold).length;
   const tabs = [{key:"orders",label:T.adm_orders,icon:"📋"},{key:"products",label:T.adm_products,icon:"📦"},{key:"ingredients",label:T.adm_ing,icon:"🧪"}];
