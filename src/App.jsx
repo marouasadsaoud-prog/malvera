@@ -720,7 +720,13 @@ function OrdersTab({ T, orders, onUpdateStatus, onDeleteOrder }) {
               {filtered.map(o=>(
                 <tr key={o.id}>
                   <td><strong>{o.name}</strong><br/><span style={{fontSize:"0.75rem",color:"var(--muted)"}}>{o.commune&&`${o.commune} - `}{o.address}</span></td>
-                  <td>{o.product_name}</td><td>{o.qty}</td><td>{o.wilaya}</td>
+                  <td>
+  {o.items && o.items.length > 0
+    ? o.items.map((item,i)=><div key={i} style={{fontSize:"0.82rem"}}>{item.productName} <b>x{item.qty}</b></div>)
+    : o.product_name
+  }
+</td>
+<td>{o.qty}</td><td>{o.wilaya}</td>
                   <td><span className={`badge ${o.delivery_type==="stopdesk"?"badge-confirmed":"badge-pending"}`}>{o.delivery_type==="stopdesk"?"Stop Desk":"Home"}</span></td>
                   <td>{o.phone}</td>
                   <td style={{fontSize:"0.8rem",color:"var(--muted)"}}>{new Date(o.created_at).toLocaleString()}</td>
