@@ -4,11 +4,12 @@ const SUPABASE_URL = "https://oknqxjijpebnyogcpeee.supabase.co";
 const SUPABASE_KEY = "sb_publishable_f2GocL92eVimF-c3ugdnGQ_izZygETk";
 const TG_TOKEN = "8852249091:AAFeRA4zBd0gFAbyssou90wR-TCZFLi0Pn0";
 const TG_CHAT = "6269196175";
+
 const tgNotify = async (msg) => {
   await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({chat_id: TG_CHAT, text: msg, parse_mode:"HTML"})
+    body: JSON.stringify({chat_id:TG_CHAT, text:msg, parse_mode:"HTML"})
   });
 };
 
@@ -101,8 +102,8 @@ const CAT_LABELS = { face:{en:"Face",ar:"الوجه"}, lip:{en:"Lip Care",ar:"ا
 const PriceDisplay = ({price, discount_price}) => discount_price ? (<span><span style={{textDecoration:"line-through",color:"var(--muted)",fontSize:"0.85rem",marginRight:8}}>{price}</span><span style={{color:"var(--red)",fontWeight:600}}>{discount_price}</span></span>) : <span>{price}</span>;
 
 const TR = {
-  en:{nav_home:"Home",nav_catalog:"Catalog",nav_order:"Order",hero_cta:"Explore Collection",hero_sub:"Pure. Natural. Handcrafted.",v_natural:"Natural",v_handmade:"Handmade",v_trad:"Traditional",v_tallow:"Tallow-Based",cat_title:"Our Collection",f_all:"All",f_face:"Face",f_lip:"Lip Care",f_body:"Body",f_hair:"Hair",order_btn:"Order Now",details_btn:"View Details",back:"← Back",order_title:"Place Your Order",f_name:"Full Name",f_phone:"Phone Number",f_wilaya:"Wilaya",f_addr:"Delivery Address",f_product:"Product",f_qty:"Quantity",sel_wilaya:"Select your wilaya",sel_product:"Select a product",submit:"Place Order",conf_title:"Order Received!",conf_msg:"Thank you! We will contact you shortly to confirm your order.",conf_back:"Back to Shop",brand_desc:"At Malvera, we believe in timeless beauty rooted in tradition. Every product is handcrafted with pure, natural ingredients — centered around the power of beef tallow — to nourish, strengthen, and restore balance to your skin, lips, and hair.",adm_login:"Admin Login",adm_email:"Email",adm_pass:"Password",adm_signin:"Sign In",adm_wrong:"Invalid credentials",adm_orders:"Orders",adm_products:"Product Stock",adm_ing:"Ingredients",adm_logout:"Logout",s_pending:"Pending",s_confirmed:"Confirmed",s_delivered:"Delivered",low_stock:"Low Stock",save:"Save",search:"Search...",c_name:"Customer",c_product:"Product",c_qty:"Qty",c_wilaya:"Wilaya",c_phone:"Phone",c_date:"Date",c_status:"Status",no_orders:"No orders yet.",threshold:"Alert (g)",stock_qty:"Stock",loading:"Loading...",del_type:"Delivery Type",del_home:"Home Delivery",del_stop:"Stop Desk",f_commune:"Commune",f_stopdesk:"Select Stop Desk",sel_commune:"Select your commune",sel_stopdesk:"Select a stop desk",view_map:"View on map"},
-  ar:{nav_home:"الرئيسية",nav_catalog:"المنتجات",nav_order:"اطلب الآن",hero_cta:"اكتشفي المجموعة",hero_sub:"طبيعي. نقي. صنع بالحب.",v_natural:"طبيعي",v_handmade:"صنع يدوي",v_trad:"تراثي",v_tallow:"زبدة الشحم",cat_title:"مجموعتنا",f_all:"الكل",f_face:"الوجه",f_lip:"العناية بالشفاه",f_body:"الجسم",f_hair:"الشعر",order_btn:"اطلبي الآن",details_btn:"عرض التفاصيل",back:"→ رجوع",order_title:"أرسلي طلبك",f_name:"الاسم الكامل",f_phone:"رقم الهاتف",f_wilaya:"الولاية",f_addr:"عنوان التوصيل",f_product:"المنتج",f_qty:"الكمية",sel_wilaya:"اختاري ولايتك",sel_product:"اختاري منتجاً",submit:"إرسال الطلب",conf_title:"تم استلام طلبك!",conf_msg:"شكراً لكِ! سنتواصل معكِ قريباً لتأكيد طلبك.",conf_back:"العودة للمتجر",brand_desc:"في Malvera، نؤمن بالجمال الخالد المستوحى من الموروث. كل منتج مصنوع يدوياً من مكونات طبيعية خالصة — في قلبها شحم البقر — لتغذية بشرتكِ وشعركِ وشفاهكِ وإعادة توازنها.",adm_login:"تسجيل الدخول",adm_email:"البريد",adm_pass:"كلمة المرور",adm_signin:"دخول",adm_wrong:"بيانات غير صحيحة",adm_orders:"الطلبات",adm_products:"مخزون المنتجات",adm_ing:"المكونات",adm_logout:"خروج",s_pending:"قيد الانتظار",s_confirmed:"مؤكد",s_delivered:"تم التوصيل",low_stock:"مخزون منخفض",save:"حفظ",search:"بحث...",c_name:"العميلة",c_product:"المنتج",c_qty:"الكمية",c_wilaya:"الولاية",c_phone:"الهاتف",c_date:"التاريخ",c_status:"الحالة",no_orders:"لا توجد طلبات بعد.",threshold:"حد التنبيه",stock_qty:"الكمية",loading:"جاري التحميل...",del_type:"نوع التوصيل",del_home:"توصيل للمنزل",del_stop:"نقطة توقف",f_commune:"البلدية",f_stopdesk:"اختاري نقطة التوقف",sel_commune:"اختاري بلديتك",sel_stopdesk:"اختاري نقطة التوقف",view_map:"عرض على الخريطة"}
+  en:{nav_home:"Home",nav_catalog:"Catalog",nav_order:"Order",hero_cta:"Explore Collection",hero_sub:"Pure. Natural. Handcrafted.",v_natural:"Natural",v_handmade:"Handmade",v_trad:"Traditional",v_tallow:"Tallow-Based",cat_title:"Our Collection",f_all:"All",f_face:"Face",f_lip:"Lip Care",f_body:"Body",f_hair:"Hair",order_btn:"Order Now",details_btn:"View Details",back:"← Back",order_title:"Place Your Order",f_name:"Full Name",f_phone:"Phone Number",f_wilaya:"Wilaya",f_addr:"Delivery Address",f_product:"Product",f_qty:"Quantity",sel_wilaya:"Select your wilaya",sel_product:"Select a product",submit:"Place Order",conf_title:"Order Received!",conf_msg:"Thank you! We will contact you shortly to confirm your order.",conf_back:"Back to Shop",brand_desc:"At Malvera, we believe in timeless beauty rooted in tradition. Every product is handcrafted with pure, natural ingredients — centered around the power of beef tallow — to nourish, strengthen, and restore balance to your skin, lips, and hair.",adm_login:"Admin Login",adm_email:"Email",adm_pass:"Password",adm_signin:"Sign In",adm_wrong:"Invalid credentials",adm_orders:"Orders",adm_products:"Product Stock",adm_ing:"Ingredients",adm_logout:"Logout",s_pending:"Pending",s_confirmed:"Confirmed",s_delivered:"Delivered",low_stock:"Low Stock",save:"Save",search:"Search...",c_name:"Customer",c_product:"Product",c_qty:"Qty",c_wilaya:"Wilaya",c_phone:"Phone",c_date:"Date",c_status:"Status",no_orders:"No orders yet.",threshold:"Alert (g)",stock_qty:"Stock",loading:"Loading...",del_type:"Delivery Type",del_home:"Home Delivery",del_stop:"Stop Desk",f_commune:"Commune",f_stopdesk:"Select Stop Desk",sel_commune:"Enter your commune",sel_stopdesk:"Select a stop desk",view_map:"View on map"},
+  ar:{nav_home:"الرئيسية",nav_catalog:"المنتجات",nav_order:"اطلب الآن",hero_cta:"اكتشفي المجموعة",hero_sub:"طبيعي. نقي. صنع بالحب.",v_natural:"طبيعي",v_handmade:"صنع يدوي",v_trad:"تراثي",v_tallow:"زبدة الشحم",cat_title:"مجموعتنا",f_all:"الكل",f_face:"الوجه",f_lip:"العناية بالشفاه",f_body:"الجسم",f_hair:"الشعر",order_btn:"اطلبي الآن",details_btn:"عرض التفاصيل",back:"→ رجوع",order_title:"أرسلي طلبك",f_name:"الاسم الكامل",f_phone:"رقم الهاتف",f_wilaya:"الولاية",f_addr:"عنوان التوصيل",f_product:"المنتج",f_qty:"الكمية",sel_wilaya:"اختاري ولايتك",sel_product:"اختاري منتجاً",submit:"إرسال الطلب",conf_title:"تم استلام طلبك!",conf_msg:"شكراً لكِ! سنتواصل معكِ قريباً لتأكيد طلبك.",conf_back:"العودة للمتجر",brand_desc:"في Malvera، نؤمن بالجمال الخالد المستوحى من الموروث. كل منتج مصنوع يدوياً من مكونات طبيعية خالصة — في قلبها شحم البقر — لتغذية بشرتكِ وشعركِ وشفاهكِ وإعادة توازنها.",adm_login:"تسجيل الدخول",adm_email:"البريد",adm_pass:"كلمة المرور",adm_signin:"دخول",adm_wrong:"بيانات غير صحيحة",adm_orders:"الطلبات",adm_products:"مخزون المنتجات",adm_ing:"المكونات",adm_logout:"خروج",s_pending:"قيد الانتظار",s_confirmed:"مؤكد",s_delivered:"تم التوصيل",low_stock:"مخزون منخفض",save:"حفظ",search:"بحث...",c_name:"العميلة",c_product:"المنتج",c_qty:"الكمية",c_wilaya:"الولاية",c_phone:"الهاتف",c_date:"التاريخ",c_status:"الحالة",no_orders:"لا توجد طلبات بعد.",threshold:"حد التنبيه",stock_qty:"الكمية",loading:"جاري التحميل...",del_type:"نوع التوصيل",del_home:"توصيل للمنزل",del_stop:"نقطة توقف",f_commune:"البلدية",f_stopdesk:"اختاري نقطة التوقف",sel_commune:"أدخلي بلديتك",sel_stopdesk:"اختاري نقطة التوقف",view_map:"عرض على الخريطة"}
 };
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
@@ -253,7 +254,7 @@ export default function App() {
         setProducts(prev => prev.map(p => p.id === prod.id ? {...p, stock: newStock} : p));
       }
       if (inserted[0]) setOrders(prev => [inserted[0], ...prev]);
-      tgNotify(`🛍️ <b>New Order!</b>\n👤 ${data.name}\n📞 ${data.phone}\n📦 ${data.productName} x${data.qty}\n📍 ${data.wilaya} - ${data.deliveryType==="stopdesk"?"Stop Desk":"Home Delivery"}`);
+      tgNotify(`🛍️ <b>New Order!</b>\n👤 ${data.name}\n📞 ${data.phone}\n📦 ${data.productName} x${data.qty}\n📍 ${data.wilaya} - ${data.deliveryType==="stopdesk"?"Stop Desk 🏢":"Home Delivery 🏠"}\n${data.deliveryType==="stopdesk"?`🏢 ${data.stopdesk}`:`🏘️ ${data.commune||""} - ${data.address}`}`);
       setPage("confirm");
     } catch(e) { console.error(e); }
   };
@@ -265,11 +266,11 @@ export default function App() {
   const updateProductStock = async (id, stock) => {
     await sb(`products?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ stock: Number(stock) }) });
     setProducts(prev => prev.map(p => p.id===id ? {...p,stock:Number(stock)} : p));
+    const updatedProduct = products.find(p=>p.id===id);
+    if (updatedProduct && Number(stock) <= updatedProduct.threshold) {
+      tgNotify(`⚠️ <b>Low Stock Alert!</b>\n📦 ${updatedProduct.name}\n🔢 Only ${stock} units left!`);
+    }
   };
-  const updatedProduct = products.find(p=>p.id===id);
-if (updatedProduct && Number(stock) <= updatedProduct.threshold) {
-  tgNotify(`⚠️ <b>Low Stock Alert!</b>\n📦 ${updatedProduct.name}\n🔢 Only ${stock} units left!`);
-}
   const updateProductThreshold = async (id, threshold) => {
     await sb(`products?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ threshold: Number(threshold) }) });
     setProducts(prev => prev.map(p => p.id===id ? {...p,threshold:Number(threshold)} : p));
@@ -285,11 +286,11 @@ if (updatedProduct && Number(stock) <= updatedProduct.threshold) {
   const updateIngQty = async (id, qty) => {
     await sb(`ingredients?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ qty: Number(qty) }) });
     setIngredients(prev => prev.map(i => i.id===id ? {...i,qty:Number(qty)} : i));
+    const updatedIng = ingredients.find(i=>i.id===id);
+    if (updatedIng && Number(qty) <= updatedIng.threshold && updatedIng.threshold > 0) {
+      tgNotify(`⚠️ <b>Low Ingredient Alert!</b>\n🧪 ${updatedIng.name}\n🔢 Only ${qty}g left!`);
+    }
   };
-  const updatedIng = ingredients.find(i=>i.id===id);
-if (updatedIng && Number(qty) <= updatedIng.threshold && updatedIng.threshold > 0) {
-  tgNotify(`⚠️ <b>Low Ingredient Alert!</b>\n🧪 ${updatedIng.name}\n🔢 Only ${qty}g left!`);
-}
   const updateIngThreshold = async (id, threshold) => {
     await sb(`ingredients?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ threshold: Number(threshold) }) });
     setIngredients(prev => prev.map(i => i.id===id ? {...i,threshold:Number(threshold)} : i));
@@ -374,17 +375,17 @@ if (updatedIng && Number(qty) <= updatedIng.threshold && updatedIng.threshold > 
               <button className="btn-primary" onClick={()=>{setPage("home");setPreselected(null);}}>{T.conf_back}</button>
             </div>
           )}
-         <footer style={{background:"var(--mocha)",color:"rgba(255,255,255,0.5)",textAlign:"center",padding:"28px 24px",fontSize:"0.75rem",letterSpacing:"1px",marginTop:60}}>
-  <div style={{fontFamily:"Cormorant Garamond",fontSize:"1.1rem",color:"var(--gold2)",letterSpacing:"4px",marginBottom:8}}>MALVERA</div>
-  <div>Natural Cosmetics · Handcrafted with Love</div>
-  <div onClick={()=>{
-    if(!window._tap) window._tap={count:0,timer:null};
-    window._tap.count++;
-    clearTimeout(window._tap.timer);
-    window._tap.timer = setTimeout(()=>{window._tap.count=0;},1000);
-    if(window._tap.count>=3){window._tap.count=0;setPage("admin-login");}
-  }} style={{marginTop:8,height:24,cursor:"default",userSelect:"none"}} />
-</footer> 
+          <footer style={{background:"var(--mocha)",color:"rgba(255,255,255,0.5)",textAlign:"center",padding:"28px 24px",fontSize:"0.75rem",letterSpacing:"1px",marginTop:60}}>
+            <div style={{fontFamily:"Cormorant Garamond",fontSize:"1.1rem",color:"var(--gold2)",letterSpacing:"4px",marginBottom:8}}>MALVERA</div>
+            <div>Natural Cosmetics · Handcrafted with Love</div>
+            <div onClick={()=>{
+              if(!window._tap) window._tap={count:0,timer:null};
+              window._tap.count++;
+              clearTimeout(window._tap.timer);
+              window._tap.timer=setTimeout(()=>{window._tap.count=0;},1000);
+              if(window._tap.count>=3){window._tap.count=0;setPage("admin-login");}
+            }} style={{marginTop:8,height:24,cursor:"default",userSelect:"none"}} />
+          </footer>
         </div>
       )}
     </>
@@ -504,9 +505,7 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
       </div>
       <button className="btn-primary" style={{width:"100%",padding:15}} onClick={handle}>{T.submit}</button>
     </div>
-  );
-}
-function AdminLogin({ T, onLogin, onBack }) {
+  );function AdminLogin({ T, onLogin, onBack }) {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState(false);
@@ -715,4 +714,5 @@ function IngredientsTab({ T, ingredients, onUpdateQty, onUpdateThreshold }) {
       </div>
     </div>
   );
+}
 }
