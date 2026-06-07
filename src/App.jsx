@@ -246,15 +246,18 @@ export default function App() {
 
   const handleOrder = async (data) => {
     try {
-      const inserted = await sb("orders", { method:"POST", body: JSON.stringify({ name:data.name, phone:data.phone, wilaya:data.wilaya, address:data.deliveryType==="stopdesk"?data.stopdesk:data.address, commune:data.commune||null, delivery_type:data.deliveryType, product_name:data.productName, product_id:data.productId, qty:data.qty, status:"pending" }) });
-      const prod = products.find(p => p.id === data.productId);
-      if (prod) {
-        const newStock = Math.max(0, prod.stock - data.qty);
-        await sb(`products?id=eq.${prod.id}`, { method:"PATCH", body: JSON.stringify({ stock: newStock }) });
-        setProducts(prev => prev.map(p => p.id === prod.id ? {...p, stock: newStock} : p));
+      const itemsSummary = data.items.map(i=>`${i.productName} x${i.qty}`).join(", ");
+      const inserted = await sb("orders", { method:"POST", body: JSON.stringify({ name:data.name, phone:data.phone, wilaya:data.wilaya, address:data.deliveryType==="stopdesk"?data.stopdesk:data.address, commune:data.commune||null, delivery_type:data.deliveryType, product_name:itemsSummary, items:data.items, qty:data.items.reduce((s,i)=>s+i.qty,0), status:"pending" }) });
+      for (const item of data.items) {
+        const prod = products.find(p => p.id === item.productId);
+        if (prod) {
+          const newStock = Math.max(0, prod.stock - item.qty);
+          await sb(`products?id=eq.${prod.id}`, { method:"PATCH", body: JSON.stringify({ stock: newStock }) });
+          setProducts(prev => prev.map(p => p.id === prod.id ? {...p, stock: newStock} : p));
+        }
       }
       if (inserted[0]) setOrders(prev => [inserted[0], ...prev]);
-      tgNotify(`🛍️ <b>New Order!</b>\n👤 ${data.name}\n📞 ${data.phone}\n📦 ${data.productName} x${data.qty}\n📍 ${data.wilaya} - ${data.deliveryType==="stopdesk"?"Stop Desk 🏢":"Home Delivery 🏠"}\n${data.deliveryType==="stopdesk"?`🏢 ${data.stopdesk}`:`🏘️ ${data.commune||""} - ${data.address}`}`);
+      tgNotify(`🛍️ <b>New Order!</b>\n👤 ${data.name}\n📞 ${data.phone}\n📦 ${data.items.map(i=>`${i.productName} x${i.qty}`).join("\n📦 ")}\n📍 ${data.wilaya} - ${data.deliveryType==="stopdesk"?"Stop Desk 🏢":"Home Delivery 🏠"}\n${data.deliveryType==="stopdesk"?`🏢 ${data.stopdesk}`:`🏘️ ${data.commune||""} - ${data.address}`}`);
       setPage("confirm");
     } catch(e) { console.error(e); }
   };
