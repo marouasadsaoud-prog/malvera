@@ -577,7 +577,7 @@ function AdminDashboard({ T, tab, setTab, orders, products, ingredients, onUpdat
   );
 }
 
-function OrdersTab({ T, orders, onUpdateStatus }) {
+function OrdersTab({ T, orders, onUpdateStatus, onDeleteOrder }) {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterWilaya, setFilterWilaya] = useState("all");
