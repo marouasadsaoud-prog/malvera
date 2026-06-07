@@ -263,6 +263,10 @@ export default function App() {
     await sb(`orders?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ status }) });
     setOrders(prev => prev.map(o => o.id===id ? {...o,status} : o));
   };
+  const deleteOrder = async (id) => {
+    await sb(`orders?id=eq.${id}`, { method:"DELETE", headers:{"Prefer":"return=minimal"} });
+    setOrders(prev => prev.filter(o => o.id !== id));
+  };
   const updateProductStock = async (id, stock) => {
     await sb(`products?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ stock: Number(stock) }) });
     setProducts(prev => prev.map(p => p.id===id ? {...p,stock:Number(stock)} : p));
