@@ -569,7 +569,7 @@ function AdminDashboard({ T, tab, setTab, orders, products, ingredients, onUpdat
           <div className="stat-card"><div className="stat-num" style={{color:"var(--red)"}}>{lowP}</div><div className="stat-label">Low Products</div></div>
           <div className="stat-card"><div className="stat-num" style={{color:"var(--red)"}}>{lowI}</div><div className="stat-label">Low Ingredients</div></div>
         </div>
-        {tab==="orders" && <OrdersTab T={T} orders={orders} onUpdateStatus={onUpdateOrderStatus} />}
+        {tab==="orders" && <OrdersTab T={T} orders={orders} onUpdateStatus={onUpdateOrderStatus} onDeleteOrder={onDeleteOrder} />}
         {tab==="products" && <ProductsTab T={T} products={products} onUpdateStock={onUpdateProductStock} onUpdateThreshold={onUpdateProductThreshold} onUpdatePrice={onUpdateProductPrice} onUpdateDiscount={onUpdateProductDiscount} />}
         {tab==="ingredients" && <IngredientsTab T={T} ingredients={ingredients} onUpdateQty={onUpdateIngQty} onUpdateThreshold={onUpdateIngThreshold} />}
       </main>
