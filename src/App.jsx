@@ -433,7 +433,114 @@ function CatalogPage({ T, lang, products, onOrder, onDetail }) {
 }
 
 function OrderPage({ T, products, preselected, onSubmit, onBack }) {
-  const [form, setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home",productId:preselected?.id||"",qty:1});
+  const [form, setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home"});
+  const [cart, setCart] = useState(preselected ? [{productId:preselected.id, productName:preselected.name, qty:1}] : []);
+  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+  const isStopdesk = form.deliveryType === "stopdesk";
+  const availableStopdesks = form.wilaya && ANDERSON_STOPDESKS[form.wilaya] ? ANDERSON_STOPDESKS[form.wilaya] : [];
+  const selectedStopdesk = availableStopdesks.find(s=>s.name===form.stopdesk);
+
+  const addToCart = (productId) => {
+    const prod = products.find(p=>p.id===Number(productId));
+    if (!prod) return;
+    if (cart.find(i=>i.productId===prod.id)) return;
+    setCart(prev=>[...prev, {productId:prod.id, productName:prod.name, qty:1}]);
+  };
+  const updateCartQty = (productId, qty) => {
+    setCart(prev=>prev.map(i=>i.productId===productId ? {...i,qty:Number(qty)} : i));
+  };
+  const removeFromCart = (productId) => {
+    setCart(prev=>prev.filter(i=>i.productId!==productId));
+  };
+
+  const handle = () => {
+    if (!form.name||!form.phone||!form.wilaya||cart.length===0) return;
+    if (isStopdesk && !form.stopdesk) return;
+    if (!isStopdesk && !form.address) return;
+    onSubmit({...form, items:cart});
+  };
+
+  return (
+    <div className="order-page">
+      <button className="back-btn" onClick={onBack}>{T.back}</button>
+      <h2 className="order-title">{T.order_title}</h2>
+      <div className="section-line" style={{marginBottom:32}} />
+      {[["name",T.f_name,"text"],["phone",T.f_phone,"tel"]].map(([k,l,type])=>(
+        <div className="form-group" key={k}>
+          <label className="form-label">{l} *</label>
+          <input className="form-input" type={type} value={form[k]} onChange={e=>set(k,e.target.value)} />
+        </div>
+      ))}
+      <div className="form-group">
+        <label className="form-label">{T.del_type} *</label>
+        <div style={{display:"flex",gap:12}}>
+          <button type="button" onClick={()=>set("deliveryType","home")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="home"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="home"?"var(--mocha)":"var(--white)",color:form.deliveryType==="home"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>
+            🏠 {T.del_home}
+          </button>
+          <button type="button" onClick={()=>set("deliveryType","stopdesk")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="stopdesk"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="stopdesk"?"var(--mocha)":"var(--white)",color:form.deliveryType==="stopdesk"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>
+            🏢 {T.del_stop}
+          </button>
+        </div>
+      </div>
+      <div className="form-group">
+        <label className="form-label">{T.f_wilaya} *</label>
+        <select className="form-select" value={form.wilaya} onChange={e=>{set("wilaya",e.target.value);set("stopdesk","");set("commune","");}}>
+          <option value="">{T.sel_wilaya}</option>
+          {(isStopdesk ? STOPDESK_WILAYAS : WILAYAS).map(w=><option key={w} value={w}>{w}</option>)}
+        </select>
+      </div>
+      {isStopdesk && form.wilaya && (
+        <div className="form-group">
+          <label className="form-label">{T.f_stopdesk} *</label>
+          <select className="form-select" value={form.stopdesk} onChange={e=>set("stopdesk",e.target.value)}>
+            <option value="">{T.sel_stopdesk}</option>
+            {availableStopdesks.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+          </select>
+          {selectedStopdesk?.maps && (
+            <a href={selectedStopdesk.maps} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:8,fontSize:"0.78rem",color:"var(--gold)",letterSpacing:"1px"}}>
+              📍 {T.view_map}
+            </a>
+          )}
+        </div>
+      )}
+      {!isStopdesk && (
+        <>
+          <div className="form-group">
+            <label className="form-label">{T.f_commune} *</label>
+            <input className="form-input" value={form.commune} onChange={e=>set("commune",e.target.value)} placeholder={T.sel_commune} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">{T.f_addr} *</label>
+            <input className="form-input" value={form.address} onChange={e=>set("address",e.target.value)} />
+          </div>
+        </>
+      )}
+      <div className="form-group">
+        <label className="form-label">Products *</label>
+        <select className="form-select" value="" onChange={e=>{addToCart(e.target.value);e.target.value="";}}>
+          <option value="">+ Add a product</option>
+          {products.filter(p=>!cart.find(i=>i.productId===p.id)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </div>
+      {cart.length > 0 && (
+        <div className="form-group">
+          <label className="form-label">Your Cart</label>
+          <div style={{border:"1px solid var(--beige2)",borderRadius:2,overflow:"hidden"}}>
+            {cart.map((item,idx)=>(
+              <div key={item.productId} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:idx<cart.length-1?"1px solid var(--beige2)":"none",background:"var(--white)"}}>
+                <span style={{flex:1,fontSize:"0.9rem",color:"var(--text)"}}>{item.productName}</span>
+                <input type="number" min="1" value={item.qty} onChange={e=>updateCartQty(item.productId,e.target.value)} style={{width:60,padding:"4px 8px",border:"1px solid var(--beige2)",borderRadius:2,fontFamily:"Jost",fontSize:"0.85rem",textAlign:"center"}} />
+                <button onClick={()=>removeFromCart(item.productId)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--muted)",fontSize:"1rem",lineHeight:1}}>✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <button className="btn-primary" style={{width:"100%",padding:15}} onClick={handle}>{T.submit}</button>
+    </div>
+  );
+}
+const [form, setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home",productId:preselected?.id||"",qty:1});
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
   const isStopdesk = form.deliveryType === "stopdesk";
   const availableStopdesks = form.wilaya && ANDERSON_STOPDESKS[form.wilaya] ? ANDERSON_STOPDESKS[form.wilaya] : [];
