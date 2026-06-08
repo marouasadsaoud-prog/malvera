@@ -738,4 +738,4 @@ function IngredientsTab({ T, ingredients, onUpdateQty, onUpdateThreshold }) {
     </div>
   );
 }
-}
+
