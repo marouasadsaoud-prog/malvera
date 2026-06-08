@@ -98,13 +98,14 @@ const ANDERSON_STOPDESKS = {
 const STOPDESK_WILAYAS = Object.keys(ANDERSON_STOPDESKS);
 
 const EMOJIS = {1:"✨",2:"🧼",3:"💋",4:"🥥",5:"🍑",6:"🤍",7:"🌿",8:"🍓",9:"🫧",10:"🌙"};
-const CAT_LABELS = { face:{en:"Face",ar:"الوجه"}, lip:{en:"Lip Care",ar:"العناية بالشفاه"}, body:{en:"Body",ar:"الجسم"}, hair:{en:"Hair",ar:"الشعر"} };
-const PriceDisplay = ({price, discount_price}) => discount_price ? (<span><span style={{textDecoration:"line-through",color:"var(--muted)",fontSize:"0.85rem",marginRight:8}}>{price}</span><span style={{color:"var(--red)",fontWeight:600}}>{discount_price}</span></span>) : <span>{price}</span>;
+const CAT_LABELS = {face:{en:"Face",ar:"الوجه"},lip:{en:"Lip Care",ar:"العناية بالشفاه"},body:{en:"Body",ar:"الجسم"},hair:{en:"Hair",ar:"الشعر"}};
+const PriceDisplay = ({price,discount_price}) => discount_price ? (<span><span style={{textDecoration:"line-through",color:"var(--muted)",fontSize:"0.85rem",marginRight:8}}>{price}</span><span style={{color:"var(--red)",fontWeight:600}}>{discount_price}</span></span>) : <span>{price}</span>;
 
 const TR = {
   en:{nav_home:"Home",nav_catalog:"Catalog",nav_order:"Order",hero_cta:"Explore Collection",hero_sub:"Pure. Natural. Handcrafted.",v_natural:"Natural",v_handmade:"Handmade",v_trad:"Traditional",v_tallow:"Tallow-Based",cat_title:"Our Collection",f_all:"All",f_face:"Face",f_lip:"Lip Care",f_body:"Body",f_hair:"Hair",order_btn:"Order Now",details_btn:"View Details",back:"← Back",order_title:"Place Your Order",f_name:"Full Name",f_phone:"Phone Number",f_wilaya:"Wilaya",f_addr:"Delivery Address",f_product:"Product",f_qty:"Quantity",sel_wilaya:"Select your wilaya",sel_product:"Select a product",submit:"Place Order",conf_title:"Order Received!",conf_msg:"Thank you! We will contact you shortly to confirm your order.",conf_back:"Back to Shop",brand_desc:"At Malvera, we believe in timeless beauty rooted in tradition. Every product is handcrafted with pure, natural ingredients — centered around the power of beef tallow — to nourish, strengthen, and restore balance to your skin, lips, and hair.",adm_login:"Admin Login",adm_email:"Email",adm_pass:"Password",adm_signin:"Sign In",adm_wrong:"Invalid credentials",adm_orders:"Orders",adm_products:"Product Stock",adm_ing:"Ingredients",adm_logout:"Logout",s_pending:"Pending",s_confirmed:"Confirmed",s_delivered:"Delivered",low_stock:"Low Stock",save:"Save",search:"Search...",c_name:"Customer",c_product:"Product",c_qty:"Qty",c_wilaya:"Wilaya",c_phone:"Phone",c_date:"Date",c_status:"Status",no_orders:"No orders yet.",threshold:"Alert (g)",stock_qty:"Stock",loading:"Loading...",del_type:"Delivery Type",del_home:"Home Delivery",del_stop:"Stop Desk",f_commune:"Commune",f_stopdesk:"Select Stop Desk",sel_commune:"Enter your commune",sel_stopdesk:"Select a stop desk",view_map:"View on map"},
   ar:{nav_home:"الرئيسية",nav_catalog:"المنتجات",nav_order:"اطلب الآن",hero_cta:"اكتشفي المجموعة",hero_sub:"طبيعي. نقي. صنع بالحب.",v_natural:"طبيعي",v_handmade:"صنع يدوي",v_trad:"تراثي",v_tallow:"زبدة الشحم",cat_title:"مجموعتنا",f_all:"الكل",f_face:"الوجه",f_lip:"العناية بالشفاه",f_body:"الجسم",f_hair:"الشعر",order_btn:"اطلبي الآن",details_btn:"عرض التفاصيل",back:"→ رجوع",order_title:"أرسلي طلبك",f_name:"الاسم الكامل",f_phone:"رقم الهاتف",f_wilaya:"الولاية",f_addr:"عنوان التوصيل",f_product:"المنتج",f_qty:"الكمية",sel_wilaya:"اختاري ولايتك",sel_product:"اختاري منتجاً",submit:"إرسال الطلب",conf_title:"تم استلام طلبك!",conf_msg:"شكراً لكِ! سنتواصل معكِ قريباً لتأكيد طلبك.",conf_back:"العودة للمتجر",brand_desc:"في Malvera، نؤمن بالجمال الخالد المستوحى من الموروث. كل منتج مصنوع يدوياً من مكونات طبيعية خالصة — في قلبها شحم البقر — لتغذية بشرتكِ وشعركِ وشفاهكِ وإعادة توازنها.",adm_login:"تسجيل الدخول",adm_email:"البريد",adm_pass:"كلمة المرور",adm_signin:"دخول",adm_wrong:"بيانات غير صحيحة",adm_orders:"الطلبات",adm_products:"مخزون المنتجات",adm_ing:"المكونات",adm_logout:"خروج",s_pending:"قيد الانتظار",s_confirmed:"مؤكد",s_delivered:"تم التوصيل",low_stock:"مخزون منخفض",save:"حفظ",search:"بحث...",c_name:"العميلة",c_product:"المنتج",c_qty:"الكمية",c_wilaya:"الولاية",c_phone:"الهاتف",c_date:"التاريخ",c_status:"الحالة",no_orders:"لا توجد طلبات بعد.",threshold:"حد التنبيه",stock_qty:"الكمية",loading:"جاري التحميل...",del_type:"نوع التوصيل",del_home:"توصيل للمنزل",del_stop:"نقطة توقف",f_commune:"البلدية",f_stopdesk:"اختاري نقطة التوقف",sel_commune:"أدخلي بلديتك",sel_stopdesk:"اختاري نقطة التوقف",view_map:"عرض على الخريطة"}
 };
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -323,7 +324,7 @@ export default function App() {
           onUpdateIngQty={updateIngQty} onUpdateIngThreshold={updateIngThreshold}
           onUpdateProductPrice={updateProductPrice} onUpdateProductDiscount={updateProductDiscount}
           onDeleteOrder={deleteOrder}
-          onLogout={()=>{setIsAdmin(false);setPage("home");}}/>
+          onLogout={()=>{setIsAdmin(false);setPage("home");}} />
       )}
       {!["admin-login","admin"].includes(page) && (
         <div className={lang==="ar"?"rtl":"ltr"}>
@@ -434,32 +435,24 @@ function CatalogPage({ T, lang, products, onOrder, onDetail }) {
 
 function OrderPage({ T, products, preselected, onSubmit, onBack }) {
   const [form, setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home"});
-  const [cart, setCart] = useState(preselected ? [{productId:preselected.id, productName:preselected.name, qty:1}] : []);
+  const [cart, setCart] = useState(preselected ? [{productId:preselected.id,productName:preselected.name,qty:1}] : []);
   const set = (k,v) => setForm(f=>({...f,[k]:v}));
-  const isStopdesk = form.deliveryType === "stopdesk";
+  const isStopdesk = form.deliveryType==="stopdesk";
   const availableStopdesks = form.wilaya && ANDERSON_STOPDESKS[form.wilaya] ? ANDERSON_STOPDESKS[form.wilaya] : [];
   const selectedStopdesk = availableStopdesks.find(s=>s.name===form.stopdesk);
-
   const addToCart = (productId) => {
     const prod = products.find(p=>p.id===Number(productId));
-    if (!prod) return;
-    if (cart.find(i=>i.productId===prod.id)) return;
-    setCart(prev=>[...prev, {productId:prod.id, productName:prod.name, qty:1}]);
+    if (!prod||cart.find(i=>i.productId===prod.id)) return;
+    setCart(prev=>[...prev,{productId:prod.id,productName:prod.name,qty:1}]);
   };
-  const updateCartQty = (productId, qty) => {
-    setCart(prev=>prev.map(i=>i.productId===productId ? {...i,qty:Number(qty)} : i));
-  };
-  const removeFromCart = (productId) => {
-    setCart(prev=>prev.filter(i=>i.productId!==productId));
-  };
-
+  const updateCartQty = (productId,qty) => setCart(prev=>prev.map(i=>i.productId===productId?{...i,qty:Number(qty)}:i));
+  const removeFromCart = (productId) => setCart(prev=>prev.filter(i=>i.productId!==productId));
   const handle = () => {
     if (!form.name||!form.phone||!form.wilaya||cart.length===0) return;
-    if (isStopdesk && !form.stopdesk) return;
-    if (!isStopdesk && !form.address) return;
-    onSubmit({...form, items:cart});
+    if (isStopdesk&&!form.stopdesk) return;
+    if (!isStopdesk&&!form.address) return;
+    onSubmit({...form,items:cart});
   };
-
   return (
     <div className="order-page">
       <button className="back-btn" onClick={onBack}>{T.back}</button>
@@ -474,36 +467,28 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
       <div className="form-group">
         <label className="form-label">{T.del_type} *</label>
         <div style={{display:"flex",gap:12}}>
-          <button type="button" onClick={()=>set("deliveryType","home")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="home"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="home"?"var(--mocha)":"var(--white)",color:form.deliveryType==="home"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>
-            🏠 {T.del_home}
-          </button>
-          <button type="button" onClick={()=>set("deliveryType","stopdesk")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="stopdesk"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="stopdesk"?"var(--mocha)":"var(--white)",color:form.deliveryType==="stopdesk"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>
-            🏢 {T.del_stop}
-          </button>
+          <button type="button" onClick={()=>set("deliveryType","home")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="home"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="home"?"var(--mocha)":"var(--white)",color:form.deliveryType==="home"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>🏠 {T.del_home}</button>
+          <button type="button" onClick={()=>set("deliveryType","stopdesk")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="stopdesk"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="stopdesk"?"var(--mocha)":"var(--white)",color:form.deliveryType==="stopdesk"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>🏢 {T.del_stop}</button>
         </div>
       </div>
       <div className="form-group">
         <label className="form-label">{T.f_wilaya} *</label>
         <select className="form-select" value={form.wilaya} onChange={e=>{set("wilaya",e.target.value);set("stopdesk","");set("commune","");}}>
           <option value="">{T.sel_wilaya}</option>
-          {(isStopdesk ? STOPDESK_WILAYAS : WILAYAS).map(w=><option key={w} value={w}>{w}</option>)}
+          {(isStopdesk?STOPDESK_WILAYAS:WILAYAS).map(w=><option key={w} value={w}>{w}</option>)}
         </select>
       </div>
-      {isStopdesk && form.wilaya && (
+      {isStopdesk&&form.wilaya&&(
         <div className="form-group">
           <label className="form-label">{T.f_stopdesk} *</label>
           <select className="form-select" value={form.stopdesk} onChange={e=>set("stopdesk",e.target.value)}>
             <option value="">{T.sel_stopdesk}</option>
             {availableStopdesks.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
           </select>
-          {selectedStopdesk?.maps && (
-            <a href={selectedStopdesk.maps} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:8,fontSize:"0.78rem",color:"var(--gold)",letterSpacing:"1px"}}>
-              📍 {T.view_map}
-            </a>
-          )}
+          {selectedStopdesk?.maps&&(<a href={selectedStopdesk.maps} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:8,fontSize:"0.78rem",color:"var(--gold)",letterSpacing:"1px"}}>📍 {T.view_map}</a>)}
         </div>
       )}
-      {!isStopdesk && (
+      {!isStopdesk&&(
         <>
           <div className="form-group">
             <label className="form-label">{T.f_commune} *</label>
@@ -522,7 +507,7 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
           {products.filter(p=>!cart.find(i=>i.productId===p.id)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>
-      {cart.length > 0 && (
+      {cart.length>0&&(
         <div className="form-group">
           <label className="form-label">Your Cart</label>
           <div style={{border:"1px solid var(--beige2)",borderRadius:2,overflow:"hidden"}}>
@@ -530,7 +515,7 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
               <div key={item.productId} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:idx<cart.length-1?"1px solid var(--beige2)":"none",background:"var(--white)"}}>
                 <span style={{flex:1,fontSize:"0.9rem",color:"var(--text)"}}>{item.productName}</span>
                 <input type="number" min="1" value={item.qty} onChange={e=>updateCartQty(item.productId,e.target.value)} style={{width:60,padding:"4px 8px",border:"1px solid var(--beige2)",borderRadius:2,fontFamily:"Jost",fontSize:"0.85rem",textAlign:"center"}} />
-                <button onClick={()=>removeFromCart(item.productId)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--muted)",fontSize:"1rem",lineHeight:1}}>✕</button>
+                <button onClick={()=>removeFromCart(item.productId)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--muted)",fontSize:"1rem"}}>✕</button>
               </div>
             ))}
           </div>
@@ -538,92 +523,7 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
       )}
       <button className="btn-primary" style={{width:"100%",padding:15}} onClick={handle}>{T.submit}</button>
     </div>
-  );
-}
-const [form, setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home",productId:preselected?.id||"",qty:1});
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
-  const isStopdesk = form.deliveryType === "stopdesk";
-  const availableStopdesks = form.wilaya && ANDERSON_STOPDESKS[form.wilaya] ? ANDERSON_STOPDESKS[form.wilaya] : [];
-  const selectedStopdesk = availableStopdesks.find(s=>s.name===form.stopdesk);
-  const handle = () => {
-    if (!form.name||!form.phone||!form.wilaya||!form.productId) return;
-    if (isStopdesk && !form.stopdesk) return;
-    if (!isStopdesk && !form.address) return;
-    const prod = products.find(p=>p.id===Number(form.productId));
-    onSubmit({...form, productId:Number(form.productId), productName:prod?.name, qty:Number(form.qty)});
-  };
-  return (
-    <div className="order-page">
-      <button className="back-btn" onClick={onBack}>{T.back}</button>
-      <h2 className="order-title">{T.order_title}</h2>
-      <div className="section-line" style={{marginBottom:32}} />
-      {[["name",T.f_name,"text"],["phone",T.f_phone,"tel"]].map(([k,l,type])=>(
-        <div className="form-group" key={k}>
-          <label className="form-label">{l} *</label>
-          <input className="form-input" type={type} value={form[k]} onChange={e=>set(k,e.target.value)} />
-        </div>
-      ))}
-      <div className="form-group">
-        <label className="form-label">{T.del_type} *</label>
-        <div style={{display:"flex",gap:12}}>
-          <button type="button" onClick={()=>set("deliveryType","home")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="home"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="home"?"var(--mocha)":"var(--white)",color:form.deliveryType==="home"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>
-            🏠 {T.del_home}
-          </button>
-          <button type="button" onClick={()=>set("deliveryType","stopdesk")} style={{flex:1,padding:"12px",border:`2px solid ${form.deliveryType==="stopdesk"?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType==="stopdesk"?"var(--mocha)":"var(--white)",color:form.deliveryType==="stopdesk"?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>
-            🏢 {T.del_stop}
-          </button>
-        </div>
-      </div>
-      <div className="form-group">
-        <label className="form-label">{T.f_wilaya} *</label>
-        <select className="form-select" value={form.wilaya} onChange={e=>{set("wilaya",e.target.value);set("stopdesk","");set("commune","");}}>
-          <option value="">{T.sel_wilaya}</option>
-          {(isStopdesk ? STOPDESK_WILAYAS : WILAYAS).map(w=><option key={w} value={w}>{w}</option>)}
-        </select>
-      </div>
-      {isStopdesk && form.wilaya && (
-        <div className="form-group">
-          <label className="form-label">{T.f_stopdesk} *</label>
-          <select className="form-select" value={form.stopdesk} onChange={e=>set("stopdesk",e.target.value)}>
-            <option value="">{T.sel_stopdesk}</option>
-            {availableStopdesks.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
-          </select>
-          {selectedStopdesk?.maps && (
-            <a href={selectedStopdesk.maps} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:8,fontSize:"0.78rem",color:"var(--gold)",letterSpacing:"1px"}}>
-              📍 {T.view_map}
-            </a>
-          )}
-        </div>
-      )}
-      {!isStopdesk && (
-        <>
-          <div className="form-group">
-            <label className="form-label">{T.f_commune} *</label>
-            <input className="form-input" value={form.commune} onChange={e=>set("commune",e.target.value)} placeholder={T.sel_commune} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">{T.f_addr} *</label>
-            <input className="form-input" value={form.address} onChange={e=>set("address",e.target.value)} />
-          </div>
-        </>
-      )}
-      <div className="form-group">
-        <label className="form-label">{T.f_product} *</label>
-        <select className="form-select" value={form.productId} onChange={e=>set("productId",e.target.value)}>
-          <option value="">{T.sel_product}</option>
-          {products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-      </div>
-      <div className="form-group">
-        <label className="form-label">{T.f_qty}</label>
-        <input className="form-input" type="number" min="1" style={{width:100}} value={form.qty} onChange={e=>set("qty",e.target.value)} />
-      </div>
-      <button className="btn-primary" style={{width:"100%",padding:15}} onClick={handle}>{T.submit}</button>
-    </div>
-  );
-}
-
-function AdminLogin({ T, onLogin, onBack }) {
+  );function AdminLogin({ T, onLogin, onBack }) {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState(false);
@@ -648,8 +548,8 @@ function AdminLogin({ T, onLogin, onBack }) {
           <label className="form-label">{T.adm_pass}</label>
           <input className="form-input" type="password" value={pass} onChange={e=>{setPass(e.target.value);setErr(false);}} onKeyDown={e=>e.key==="Enter"&&handle()} />
         </div>
-        {err && <p style={{color:"var(--red)",fontSize:"0.8rem",marginBottom:12}}>{T.adm_wrong}</p>}
-        <button className="btn-primary" style={{width:"100%",padding:14,marginBottom:12}} onClick={handle} disabled={loading}>{loading ? "..." : T.adm_signin}</button>
+        {err&&<p style={{color:"var(--red)",fontSize:"0.8rem",marginBottom:12}}>{T.adm_wrong}</p>}
+        <button className="btn-primary" style={{width:"100%",padding:14,marginBottom:12}} onClick={handle} disabled={loading}>{loading?"...":T.adm_signin}</button>
         <button className="btn-outline" style={{width:"100%",padding:10}} onClick={onBack}>{T.back}</button>
       </div>
     </div>
@@ -679,9 +579,9 @@ function AdminDashboard({ T, tab, setTab, orders, products, ingredients, onUpdat
           <div className="stat-card"><div className="stat-num" style={{color:"var(--red)"}}>{lowP}</div><div className="stat-label">Low Products</div></div>
           <div className="stat-card"><div className="stat-num" style={{color:"var(--red)"}}>{lowI}</div><div className="stat-label">Low Ingredients</div></div>
         </div>
-        {tab==="orders" && <OrdersTab T={T} orders={orders} onUpdateStatus={onUpdateOrderStatus} onDeleteOrder={onDeleteOrder} />}
-        {tab==="products" && <ProductsTab T={T} products={products} onUpdateStock={onUpdateProductStock} onUpdateThreshold={onUpdateProductThreshold} onUpdatePrice={onUpdateProductPrice} onUpdateDiscount={onUpdateProductDiscount} />}
-        {tab==="ingredients" && <IngredientsTab T={T} ingredients={ingredients} onUpdateQty={onUpdateIngQty} onUpdateThreshold={onUpdateIngThreshold} />}
+        {tab==="orders"&&<OrdersTab T={T} orders={orders} onUpdateStatus={onUpdateOrderStatus} onDeleteOrder={onDeleteOrder} />}
+        {tab==="products"&&<ProductsTab T={T} products={products} onUpdateStock={onUpdateProductStock} onUpdateThreshold={onUpdateProductThreshold} onUpdatePrice={onUpdateProductPrice} onUpdateDiscount={onUpdateProductDiscount} />}
+        {tab==="ingredients"&&<IngredientsTab T={T} ingredients={ingredients} onUpdateQty={onUpdateIngQty} onUpdateThreshold={onUpdateIngThreshold} />}
       </main>
     </div>
   );
@@ -712,32 +612,28 @@ function OrdersTab({ T, orders, onUpdateStatus, onDeleteOrder }) {
           {wilayas.map(w=><option key={w} value={w}>{w}</option>)}
         </select>
       </div>
-      {filtered.length===0 ? <p style={{color:"var(--muted)",padding:"20px 0"}}>{T.no_orders}</p> : (
+      {filtered.length===0?<p style={{color:"var(--muted)",padding:"20px 0"}}>{T.no_orders}</p>:(
         <div style={{overflowX:"auto"}}>
           <table>
             <thead><tr><th>{T.c_name}</th><th>{T.c_product}</th><th>{T.c_qty}</th><th>{T.c_wilaya}</th><th>Delivery</th><th>{T.c_phone}</th><th>{T.c_date}</th><th>{T.c_status}</th></tr></thead>
             <tbody>
               {filtered.map(o=>(
-                <tr key={o.id}>
+                <tr key={o.id} style={{background:o.status==="confirmed"?"#f0f7ff":o.status==="delivered"?"#f0fff4":"white"}}>
                   <td><strong>{o.name}</strong><br/><span style={{fontSize:"0.75rem",color:"var(--muted)"}}>{o.commune&&`${o.commune} - `}{o.address}</span></td>
-                  <td>
-  {o.items && o.items.length > 0
-    ? o.items.map((item,i)=><div key={i} style={{fontSize:"0.82rem"}}>{item.productName} <b>x{item.qty}</b></div>)
-    : o.product_name
-  }
-</td>
-<td>{o.qty}</td><td>{o.wilaya}</td>
+                  <td>{o.items&&o.items.length>0?o.items.map((item,i)=><div key={i} style={{fontSize:"0.82rem"}}>{item.productName} <b>x{item.qty}</b></div>):o.product_name}</td>
+                  <td>{o.qty}</td>
+                  <td>{o.wilaya}</td>
                   <td><span className={`badge ${o.delivery_type==="stopdesk"?"badge-confirmed":"badge-pending"}`}>{o.delivery_type==="stopdesk"?"Stop Desk":"Home"}</span></td>
                   <td>{o.phone}</td>
                   <td style={{fontSize:"0.8rem",color:"var(--muted)"}}>{new Date(o.created_at).toLocaleString()}</td>
                   <td>
                     <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                    <select className="status-select" value={o.status} onChange={e=>onUpdateStatus(o.id,e.target.value)} style={{background:o.status==="confirmed"?"#d1edff":o.status==="delivered"?"#d4edda":"#fef3cd",color:o.status==="confirmed"?"#0a5a8a":o.status==="delivered"?"#155724":"#856404",fontWeight:500}}>
-                      <option value="pending">{T.s_pending}</option>
-                      <option value="confirmed">{T.s_confirmed}</option>
-                      <option value="delivered">{T.s_delivered}</option>
-                    </select>
-                    <button onClick={()=>{if(window.confirm("Delete this order?")) onDeleteOrder(o.id);}} style={{background:"#fde8e8",color:"var(--red)",border:"none",cursor:"pointer",padding:"4px 10px",borderRadius:3,fontSize:"0.75rem",fontFamily:"Jost"}}>🗑️</button>
+                      <select className="status-select" value={o.status} onChange={e=>onUpdateStatus(o.id,e.target.value)} style={{background:o.status==="confirmed"?"#d1edff":o.status==="delivered"?"#d4edda":"#fef3cd",color:o.status==="confirmed"?"#0a5a8a":o.status==="delivered"?"#155724":"#856404",fontWeight:500}}>
+                        <option value="pending">{T.s_pending}</option>
+                        <option value="confirmed">{T.s_confirmed}</option>
+                        <option value="delivered">{T.s_delivered}</option>
+                      </select>
+                      <button onClick={()=>{if(window.confirm("Delete this order?")) onDeleteOrder(o.id);}} style={{background:"#fde8e8",color:"var(--red)",border:"none",cursor:"pointer",padding:"4px 10px",borderRadius:3,fontSize:"0.75rem",fontFamily:"Jost"}}>🗑️</button>
                     </div>
                   </td>
                 </tr>
@@ -754,10 +650,10 @@ function ProductsTab({ T, products, onUpdateStock, onUpdateThreshold, onUpdatePr
   const [edits, setEdits] = useState({});
   const setEdit = (id,field,val) => setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
   const save = (p) => {
-    if (edits[p.id]?.stock!==undefined) onUpdateStock(p.id, edits[p.id].stock);
-    if (edits[p.id]?.threshold!==undefined) onUpdateThreshold(p.id, edits[p.id].threshold);
-    if (edits[p.id]?.price!==undefined) onUpdatePrice(p.id, edits[p.id].price);
-    if (edits[p.id]?.discount_price!==undefined) onUpdateDiscount(p.id, edits[p.id].discount_price);
+    if (edits[p.id]?.stock!==undefined) onUpdateStock(p.id,edits[p.id].stock);
+    if (edits[p.id]?.threshold!==undefined) onUpdateThreshold(p.id,edits[p.id].threshold);
+    if (edits[p.id]?.price!==undefined) onUpdatePrice(p.id,edits[p.id].price);
+    if (edits[p.id]?.discount_price!==undefined) onUpdateDiscount(p.id,edits[p.id].discount_price);
     setEdits(e=>{const n={...e};delete n[p.id];return n;});
   };
   return (
@@ -797,8 +693,8 @@ function IngredientsTab({ T, ingredients, onUpdateQty, onUpdateThreshold }) {
   const [filterCat, setFilterCat] = useState("all");
   const setEdit = (id,field,val) => setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
   const save = (ing) => {
-    if (edits[ing.id]?.qty!==undefined) onUpdateQty(ing.id, edits[ing.id].qty);
-    if (edits[ing.id]?.threshold!==undefined) onUpdateThreshold(ing.id, edits[ing.id].threshold);
+    if (edits[ing.id]?.qty!==undefined) onUpdateQty(ing.id,edits[ing.id].qty);
+    if (edits[ing.id]?.threshold!==undefined) onUpdateThreshold(ing.id,edits[ing.id].threshold);
     setEdits(e=>{const n={...e};delete n[ing.id];return n;});
   };
   const cats = [...new Set(ingredients.map(i=>i.category))];
@@ -841,4 +737,5 @@ function IngredientsTab({ T, ingredients, onUpdateQty, onUpdateThreshold }) {
       </div>
     </div>
   );
+}
 }
