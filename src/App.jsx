@@ -523,7 +523,9 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
       )}
       <button className="btn-primary" style={{width:"100%",padding:15}} onClick={handle}>{T.submit}</button>
     </div>
-  );function AdminLogin({ T, onLogin, onBack }) {
+  );
+}
+function AdminLogin({ T, onLogin, onBack }) {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState(false);
@@ -737,5 +739,4 @@ function IngredientsTab({ T, ingredients, onUpdateQty, onUpdateThreshold }) {
       </div>
     </div>
   );
-}
 }
