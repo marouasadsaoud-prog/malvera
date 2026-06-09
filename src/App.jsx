@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const SUPABASE_URL = "https://oknqxjijpebnyogcpeee.supabase.co";
 const SUPABASE_KEY = "sb_publishable_f2GocL92eVimF-c3ugdnGQ_izZygETk";
@@ -37,6 +37,18 @@ const sbAuth = async (email, pass) => {
   const data = await res.json();
   if (data.access_token) return { success: true, token: data.access_token };
   return { success: false };
+};
+
+const uploadPhoto = async (file, productId) => {
+  const ext = file.name.split(".").pop();
+  const path = `product-${productId}-${Date.now()}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/products/${path}`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": file.type },
+    body: file,
+  });
+  if (!res.ok) return null;
+  return `${SUPABASE_URL}/storage/v1/object/public/products/${path}`;
 };
 
 const WILAYAS = ["Adrar","Chlef","Laghouat","Oum El Bouaghi","Batna","Béjaïa","Biskra","Béchar","Blida","Bouira","Tamanrasset","Tébessa","Tlemcen","Tiaret","Tizi Ouzou","Alger","Djelfa","Jijel","Sétif","Saïda","Skikda","Sidi Bel Abbès","Annaba","Guelma","Constantine","Médéa","Mostaganem","M'Sila","Mascara","Ouargla","Oran","El Bayadh","Illizi","Bordj Bou Arréridj","Boumerdès","El Tarf","Tindouf","Tissemsilt","El Oued","Khenchela","Souk Ahras","Tipaza","Mila","Aïn Defla","Naâma","Aïn Témouchent","Ghardaïa","Relizane","Timimoun","Bordj Badji Mokhtar","Ouled Djellal","Béni Abbès","In Salah","In Guezzam","Touggourt","Djanet","El M'Ghair","El Meniaa"];
@@ -96,10 +108,10 @@ const ANDERSON_STOPDESKS = {
   "El M'Ghair":[{name:"Station El M'Ghair",maps:"https://maps.app.goo.gl/yPERLTuVt166JXPD9"}]
 };
 const STOPDESK_WILAYAS = Object.keys(ANDERSON_STOPDESKS);
-
-const EMOJIS = {1:"✨",2:"🧼",3:"💋",4:"🥥",5:"🍑",6:"🤍",7:"🌿",8:"🍓",9:"🫧",10:"🌙"};
-const CAT_LABELS = {face:{en:"Face",ar:"الوجه"},lip:{en:"Lip Care",ar:"العناية بالشفاه"},body:{en:"Body",ar:"الجسم"},hair:{en:"Hair",ar:"الشعر"}};
-const PriceDisplay = ({price,discount_price}) => discount_price ? (<span><span style={{textDecoration:"line-through",color:"var(--muted)",fontSize:"0.85rem",marginRight:8}}>{price}</span><span style={{color:"var(--red)",fontWeight:600}}>{discount_price}</span></span>) : <span>{price}</span>;
+const CATEGORIES = ["face","lip","body","hair","face,body"];
+const CAT_LABELS = {face:{en:"Face",ar:"الوجه"},lip:{en:"Lip Care",ar:"العناية بالشفاه"},body:{en:"Body",ar:"الجسم"},hair:{en:"Hair",ar:"الشعر"},"face,body":{en:"Face & Body",ar:"الوجه والجسم"}};
+const ING_CATEGORIES = ["Base Ingredients","Actives & Acids","Preservatives","Waxes, Emulsifiers & Texture Agents","Clays & Powders","Essential Oils","Fragrance Oils","Herbs, Seeds & Botanicals","Other"];
+const PriceDisplay = ({price,discount_price}) => discount_price?(<span><span style={{textDecoration:"line-through",color:"var(--muted)",fontSize:"0.85rem",marginRight:8}}>{price}</span><span style={{color:"var(--red)",fontWeight:600}}>{discount_price}</span></span>):<span>{price}</span>;
 
 const TR = {
   en:{nav_home:"Home",nav_catalog:"Catalog",nav_order:"Order",hero_cta:"Explore Collection",hero_sub:"Pure. Natural. Handcrafted.",v_natural:"Natural",v_handmade:"Handmade",v_trad:"Traditional",v_tallow:"Tallow-Based",cat_title:"Our Collection",f_all:"All",f_face:"Face",f_lip:"Lip Care",f_body:"Body",f_hair:"Hair",order_btn:"Order Now",details_btn:"View Details",back:"← Back",order_title:"Place Your Order",f_name:"Full Name",f_phone:"Phone Number",f_wilaya:"Wilaya",f_addr:"Delivery Address",f_product:"Product",f_qty:"Quantity",sel_wilaya:"Select your wilaya",sel_product:"Select a product",submit:"Place Order",conf_title:"Order Received!",conf_msg:"Thank you! We will contact you shortly to confirm your order.",conf_back:"Back to Shop",brand_desc:"At Malvera, we believe in timeless beauty rooted in tradition. Every product is handcrafted with pure, natural ingredients — centered around the power of beef tallow — to nourish, strengthen, and restore balance to your skin, lips, and hair.",adm_login:"Admin Login",adm_email:"Email",adm_pass:"Password",adm_signin:"Sign In",adm_wrong:"Invalid credentials",adm_orders:"Orders",adm_products:"Product Stock",adm_ing:"Ingredients",adm_logout:"Logout",s_pending:"Pending",s_confirmed:"Confirmed",s_delivered:"Delivered",low_stock:"Low Stock",save:"Save",search:"Search...",c_name:"Customer",c_product:"Product",c_qty:"Qty",c_wilaya:"Wilaya",c_phone:"Phone",c_date:"Date",c_status:"Status",no_orders:"No orders yet.",threshold:"Alert (g)",stock_qty:"Stock",loading:"Loading...",del_type:"Delivery Type",del_home:"Home Delivery",del_stop:"Stop Desk",f_commune:"Commune",f_stopdesk:"Select Stop Desk",sel_commune:"Enter your commune",sel_stopdesk:"Select a stop desk",view_map:"View on map"},
@@ -109,7 +121,7 @@ const TR = {
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{--beige:#f5ede0;--beige2:#ede0cc;--cream:#faf6f0;--mocha:#4a3728;--mocha2:#6b4f3a;--gold:#c9a96e;--gold2:#e8c98a;--text:#2d1f14;--muted:#8a7060;--red:#c0392b;--orange:#e67e22;--white:#ffffff;--shadow:0 4px 24px rgba(74,55,40,0.10);--shadow2:0 2px 8px rgba(74,55,40,0.08);}
+:root{--beige:#f5ede0;--beige2:#ede0cc;--cream:#faf6f0;--mocha:#4a3728;--mocha2:#6b4f3a;--gold:#c9a96e;--gold2:#e8c98a;--text:#2d1f14;--muted:#8a7060;--red:#c0392b;--orange:#e67e22;--green:#27ae60;--white:#ffffff;--shadow:0 4px 24px rgba(74,55,40,0.10);--shadow2:0 2px 8px rgba(74,55,40,0.08);}
 body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
 h1,h2,h3{font-family:'Cormorant Garamond',serif;}
 .rtl{direction:rtl;text-align:right;}.ltr{direction:ltr;text-align:left;}
@@ -145,7 +157,8 @@ h1,h2,h3{font-family:'Cormorant Garamond',serif;}
 .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:28px;}
 .product-card{background:var(--white);border-radius:4px;overflow:hidden;box-shadow:var(--shadow2);transition:transform 0.25s,box-shadow 0.25s;cursor:pointer;}
 .product-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);}
-.product-img{height:200px;background:linear-gradient(135deg,var(--beige) 0%,var(--beige2) 100%);display:flex;align-items:center;justify-content:center;font-size:3.5rem;}
+.product-img{height:200px;background:linear-gradient(135deg,var(--beige) 0%,var(--beige2) 100%);display:flex;align-items:center;justify-content:center;font-size:3.5rem;overflow:hidden;}
+.product-img img{width:100%;height:100%;object-fit:cover;}
 .product-info{padding:20px;}
 .product-cat{font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
 .product-name{font-size:1.15rem;font-weight:600;color:var(--mocha);margin-bottom:6px;font-family:'Cormorant Garamond';}
@@ -154,7 +167,8 @@ h1,h2,h3{font-family:'Cormorant Garamond',serif;}
 .product-actions{display:flex;gap:8px;}
 .detail{max-width:900px;margin:0 auto;padding:40px 32px;}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
-.detail-img{height:380px;background:linear-gradient(135deg,var(--beige) 0%,var(--beige2) 100%);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:6rem;}
+.detail-img{height:380px;background:linear-gradient(135deg,var(--beige) 0%,var(--beige2) 100%);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:6rem;overflow:hidden;}
+.detail-img img{width:100%;height:100%;object-fit:cover;}
 .detail-title{font-size:2.2rem;font-weight:300;color:var(--mocha);margin-bottom:8px;font-style:italic;}
 .detail-price{font-size:1.3rem;color:var(--gold);font-weight:500;margin-bottom:20px;}
 .detail-desc{color:var(--mocha2);line-height:1.9;font-size:0.95rem;margin-bottom:28px;font-weight:300;}
@@ -162,8 +176,9 @@ h1,h2,h3{font-family:'Cormorant Garamond',serif;}
 .order-title{font-size:2rem;font-weight:300;font-style:italic;color:var(--mocha);margin-bottom:8px;}
 .form-group{margin-bottom:20px;}
 .form-label{display:block;font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-.form-input,.form-select{width:100%;padding:12px 16px;border:1px solid var(--beige2);border-radius:2px;font-family:'Jost';font-size:0.9rem;color:var(--text);background:var(--white);outline:none;transition:border-color 0.2s;}
-.form-input:focus,.form-select:focus{border-color:var(--gold);}
+.form-input,.form-select,.form-textarea{width:100%;padding:12px 16px;border:1px solid var(--beige2);border-radius:2px;font-family:'Jost';font-size:0.9rem;color:var(--text);background:var(--white);outline:none;transition:border-color 0.2s;}
+.form-textarea{min-height:80px;resize:vertical;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold);}
 .confirm{text-align:center;padding:80px 24px;}
 .confirm-icon{font-size:4rem;margin-bottom:24px;}
 .confirm-title{font-size:2.2rem;font-style:italic;font-weight:300;color:var(--mocha);margin-bottom:16px;}
@@ -196,6 +211,9 @@ tr.low{background:#fff5f0;}
 .qty-input{width:80px;padding:4px 8px;border:1px solid var(--beige2);border-radius:3px;font-size:0.85rem;font-family:'Jost';}
 .btn-save{background:var(--mocha);color:var(--white);border:none;cursor:pointer;padding:5px 14px;border-radius:3px;font-size:0.75rem;font-family:'Jost';transition:background 0.2s;}
 .btn-save:hover{background:var(--gold);color:var(--mocha);}
+.btn-add{background:var(--gold);color:var(--mocha);border:none;cursor:pointer;padding:8px 20px;border-radius:3px;font-size:0.78rem;font-family:'Jost';font-weight:500;transition:background 0.2s;margin-bottom:16px;}
+.btn-add:hover{background:var(--mocha);color:var(--cream);}
+.btn-danger{background:#fde8e8;color:var(--red);border:none;cursor:pointer;padding:4px 10px;border-radius:3px;font-size:0.75rem;font-family:'Jost';}
 .search-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
 .search-input{flex:1;min-width:200px;padding:9px 16px;border:1px solid var(--beige2);border-radius:2px;font-family:'Jost';font-size:0.87rem;outline:none;}
 .search-input:focus{border-color:var(--gold);}
@@ -208,6 +226,10 @@ tr.low{background:#fff5f0;}
 .back-btn{background:none;border:none;cursor:pointer;font-family:'Jost';font-size:0.78rem;letter-spacing:1px;color:var(--muted);margin-bottom:24px;display:inline-flex;align-items:center;gap:6px;transition:color 0.2s;}
 .back-btn:hover{color:var(--mocha);}
 .loader{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--cream);border-radius:4px;padding:32px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:1.4rem;font-style:italic;color:var(--mocha);margin-bottom:20px;}
+.photo-preview{width:80px;height:80px;object-fit:cover;border-radius:4px;border:1px solid var(--beige2);}
 @media(max-width:768px){
   .nav{padding:0 16px;}.nav-links{gap:14px;}.detail-grid{grid-template-columns:1fr;}
   .admin-sidebar{width:56px;}.sidebar-logo,.sidebar-link span{display:none;}.sidebar-link{text-align:center;padding:14px;}
@@ -230,78 +252,94 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const T = TR[lang];
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(()=>{loadAll();},[]);
 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [p, i, o] = await Promise.all([
+      const [p,i,o] = await Promise.all([
         sb("products?order=id"),
         sb("ingredients?order=id"),
         sb("orders?order=created_at.desc"),
       ]);
-      setProducts(p); setIngredients(i); setOrders(o);
-    } catch(e) { console.error(e); }
+      setProducts(p);setIngredients(i);setOrders(o);
+    } catch(e){console.error(e);}
     setLoading(false);
   };
 
   const handleOrder = async (data) => {
     try {
       const itemsSummary = data.items.map(i=>`${i.productName} x${i.qty}`).join(", ");
-      const inserted = await sb("orders", { method:"POST", body: JSON.stringify({ name:data.name, phone:data.phone, wilaya:data.wilaya, address:data.deliveryType==="stopdesk"?data.stopdesk:data.address, commune:data.commune||null, delivery_type:data.deliveryType, product_name:itemsSummary, items:data.items, qty:data.items.reduce((s,i)=>s+i.qty,0), status:"pending" }) });
+      const inserted = await sb("orders",{method:"POST",body:JSON.stringify({name:data.name,phone:data.phone,wilaya:data.wilaya,address:data.deliveryType==="stopdesk"?data.stopdesk:data.address,commune:data.commune||null,delivery_type:data.deliveryType,product_name:itemsSummary,items:data.items,qty:data.items.reduce((s,i)=>s+i.qty,0),status:"pending"})});
       for (const item of data.items) {
-        const prod = products.find(p => p.id === item.productId);
+        const prod = products.find(p=>p.id===item.productId);
         if (prod) {
-          const newStock = Math.max(0, prod.stock - item.qty);
-          await sb(`products?id=eq.${prod.id}`, { method:"PATCH", body: JSON.stringify({ stock: newStock }) });
-          setProducts(prev => prev.map(p => p.id === prod.id ? {...p, stock: newStock} : p));
+          const newStock = Math.max(0,prod.stock-item.qty);
+          await sb(`products?id=eq.${prod.id}`,{method:"PATCH",body:JSON.stringify({stock:newStock})});
+          setProducts(prev=>prev.map(p=>p.id===prod.id?{...p,stock:newStock}:p));
         }
       }
-      if (inserted[0]) setOrders(prev => [inserted[0], ...prev]);
+      if (inserted[0]) setOrders(prev=>[inserted[0],...prev]);
       tgNotify(`🛍️ <b>New Order!</b>\n👤 ${data.name}\n📞 ${data.phone}\n📦 ${data.items.map(i=>`${i.productName} x${i.qty}`).join("\n📦 ")}\n📍 ${data.wilaya} - ${data.deliveryType==="stopdesk"?"Stop Desk 🏢":"Home Delivery 🏠"}\n${data.deliveryType==="stopdesk"?`🏢 ${data.stopdesk}`:`🏘️ ${data.commune||""} - ${data.address}`}`);
       setPage("confirm");
-    } catch(e) { console.error(e); }
+    } catch(e){console.error(e);}
   };
 
-  const updateOrderStatus = async (id, status) => {
-    await sb(`orders?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ status }) });
-    setOrders(prev => prev.map(o => o.id===id ? {...o,status} : o));
+  const updateOrderStatus = async (id,status) => {
+    await sb(`orders?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({status})});
+    setOrders(prev=>prev.map(o=>o.id===id?{...o,status}:o));
   };
   const deleteOrder = async (id) => {
-    await sb(`orders?id=eq.${id}`, { method:"DELETE", headers:{"Prefer":"return=minimal"} });
-    setOrders(prev => prev.filter(o => o.id !== id));
+    await sb(`orders?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    setOrders(prev=>prev.filter(o=>o.id!==id));
   };
-  const updateProductStock = async (id, stock) => {
-    await sb(`products?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ stock: Number(stock) }) });
-    setProducts(prev => prev.map(p => p.id===id ? {...p,stock:Number(stock)} : p));
-    const updatedProduct = products.find(p=>p.id===id);
-    if (updatedProduct && Number(stock) <= updatedProduct.threshold) {
-      tgNotify(`⚠️ <b>Low Stock Alert!</b>\n📦 ${updatedProduct.name}\n🔢 Only ${stock} units left!`);
-    }
+  const updateProductStock = async (id,stock) => {
+    await sb(`products?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({stock:Number(stock)})});
+    setProducts(prev=>prev.map(p=>p.id===id?{...p,stock:Number(stock)}:p));
+    const up = products.find(p=>p.id===id);
+    if (up&&Number(stock)<=up.threshold) tgNotify(`⚠️ <b>Low Stock Alert!</b>\n📦 ${up.name}\n🔢 Only ${stock} units left!`);
   };
-  const updateProductThreshold = async (id, threshold) => {
-    await sb(`products?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ threshold: Number(threshold) }) });
-    setProducts(prev => prev.map(p => p.id===id ? {...p,threshold:Number(threshold)} : p));
+  const updateProductThreshold = async (id,threshold) => {
+    await sb(`products?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({threshold:Number(threshold)})});
+    setProducts(prev=>prev.map(p=>p.id===id?{...p,threshold:Number(threshold)}:p));
   };
-  const updateProductPrice = async (id, price) => {
-    await sb(`products?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ price }) });
-    setProducts(prev => prev.map(p => p.id===id ? {...p,price} : p));
+  const updateProductPrice = async (id,price) => {
+    await sb(`products?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({price})});
+    setProducts(prev=>prev.map(p=>p.id===id?{...p,price}:p));
   };
-  const updateProductDiscount = async (id, discount_price) => {
-    await sb(`products?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ discount_price: discount_price||null }) });
-    setProducts(prev => prev.map(p => p.id===id ? {...p,discount_price:discount_price||null} : p));
+  const updateProductDiscount = async (id,discount_price) => {
+    await sb(`products?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({discount_price:discount_price||null})});
+    setProducts(prev=>prev.map(p=>p.id===id?{...p,discount_price:discount_price||null}:p));
   };
-  const updateIngQty = async (id, qty) => {
-    await sb(`ingredients?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ qty: Number(qty) }) });
-    setIngredients(prev => prev.map(i => i.id===id ? {...i,qty:Number(qty)} : i));
-    const updatedIng = ingredients.find(i=>i.id===id);
-    if (updatedIng && Number(qty) <= updatedIng.threshold && updatedIng.threshold > 0) {
-      tgNotify(`⚠️ <b>Low Ingredient Alert!</b>\n🧪 ${updatedIng.name}\n🔢 Only ${qty}g left!`);
-    }
+  const updateProductImage = async (id,image_url) => {
+    await sb(`products?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({image_url})});
+    setProducts(prev=>prev.map(p=>p.id===id?{...p,image_url}:p));
   };
-  const updateIngThreshold = async (id, threshold) => {
-    await sb(`ingredients?id=eq.${id}`, { method:"PATCH", body: JSON.stringify({ threshold: Number(threshold) }) });
-    setIngredients(prev => prev.map(i => i.id===id ? {...i,threshold:Number(threshold)} : i));
+  const addProduct = async (data) => {
+    const inserted = await sb("products",{method:"POST",body:JSON.stringify(data)});
+    if (inserted[0]) setProducts(prev=>[...prev,inserted[0]]);
+  };
+  const deleteProduct = async (id) => {
+    await sb(`products?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    setProducts(prev=>prev.filter(p=>p.id!==id));
+  };
+  const updateIngQty = async (id,qty) => {
+    await sb(`ingredients?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({qty:Number(qty)})});
+    setIngredients(prev=>prev.map(i=>i.id===id?{...i,qty:Number(qty)}:i));
+    const ui = ingredients.find(i=>i.id===id);
+    if (ui&&Number(qty)<=ui.threshold&&ui.threshold>0) tgNotify(`⚠️ <b>Low Ingredient Alert!</b>\n🧪 ${ui.name}\n🔢 Only ${qty}g left!`);
+  };
+  const updateIngThreshold = async (id,threshold) => {
+    await sb(`ingredients?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({threshold:Number(threshold)})});
+    setIngredients(prev=>prev.map(i=>i.id===id?{...i,threshold:Number(threshold)}:i));
+  };
+  const addIngredient = async (data) => {
+    const inserted = await sb("ingredients",{method:"POST",body:JSON.stringify(data)});
+    if (inserted[0]) setIngredients(prev=>[...prev,inserted[0]]);
+  };
+  const deleteIngredient = async (id) => {
+    await sb(`ingredients?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    setIngredients(prev=>prev.filter(i=>i.id!==id));
   };
 
   if (loading) return (
@@ -317,16 +355,18 @@ export default function App() {
   return (
     <>
       <style>{CSS}</style>
-      {page==="admin-login" && <AdminLogin T={T} onLogin={()=>{setIsAdmin(true);setPage("admin");}} onBack={()=>setPage("home")} />}
-      {page==="admin" && isAdmin && (
+      {page==="admin-login"&&<AdminLogin T={T} onLogin={()=>{setIsAdmin(true);setPage("admin");}} onBack={()=>setPage("home")} />}
+      {page==="admin"&&isAdmin&&(
         <AdminDashboard T={T} tab={adminTab} setTab={setAdminTab} orders={orders} products={products} ingredients={ingredients}
           onUpdateOrderStatus={updateOrderStatus} onUpdateProductStock={updateProductStock} onUpdateProductThreshold={updateProductThreshold}
           onUpdateIngQty={updateIngQty} onUpdateIngThreshold={updateIngThreshold}
           onUpdateProductPrice={updateProductPrice} onUpdateProductDiscount={updateProductDiscount}
+          onUpdateProductImage={updateProductImage} onAddProduct={addProduct} onDeleteProduct={deleteProduct}
+          onAddIngredient={addIngredient} onDeleteIngredient={deleteIngredient}
           onDeleteOrder={deleteOrder}
           onLogout={()=>{setIsAdmin(false);setPage("home");}} />
       )}
-      {!["admin-login","admin"].includes(page) && (
+      {!["admin-login","admin"].includes(page)&&(
         <div className={lang==="ar"?"rtl":"ltr"}>
           <nav className="nav">
             <div className="nav-logo" onClick={()=>setPage("home")}>MALVERA</div>
@@ -337,7 +377,7 @@ export default function App() {
               <button className="lang-btn" onClick={()=>setLang(lang==="en"?"ar":"en")}>{lang==="en"?"عربي":"EN"}</button>
             </div>
           </nav>
-          {page==="home" && (
+          {page==="home"&&(
             <>
               <section className="hero">
                 <div className="hero-tag">✦ Natural Cosmetics ✦</div>
@@ -353,16 +393,18 @@ export default function App() {
               </div>
             </>
           )}
-          {page==="catalog" && (
+          {page==="catalog"&&(
             <CatalogPage T={T} lang={lang} products={products}
               onOrder={p=>{setPreselected(p);setPage("order");}}
               onDetail={p=>{setSelectedProduct(p);setPage("detail");}} />
           )}
-          {page==="detail" && selectedProduct && (
+          {page==="detail"&&selectedProduct&&(
             <div className="detail" style={{paddingTop:48}}>
               <button className="back-btn" onClick={()=>setPage("catalog")}>{T.back}</button>
               <div className="detail-grid">
-                <div className="detail-img">{EMOJIS[selectedProduct.id]||"🌿"}</div>
+                <div className="detail-img">
+                  {selectedProduct.image_url?<img src={selectedProduct.image_url} alt={selectedProduct.name} />:<span>🌿</span>}
+                </div>
                 <div>
                   <div className="product-cat">{selectedProduct.category}</div>
                   <h2 className="detail-title">{selectedProduct.name}</h2>
@@ -373,10 +415,10 @@ export default function App() {
               </div>
             </div>
           )}
-          {page==="order" && (
+          {page==="order"&&(
             <OrderPage T={T} products={products} preselected={preselected} onSubmit={handleOrder} onBack={()=>setPage("catalog")} />
           )}
-          {page==="confirm" && (
+          {page==="confirm"&&(
             <div className="confirm">
               <div className="confirm-icon">✨</div>
               <h2 className="confirm-title">{T.conf_title}</h2>
@@ -401,10 +443,10 @@ export default function App() {
   );
 }
 
-function CatalogPage({ T, lang, products, onOrder, onDetail }) {
-  const [activeFilter, setActiveFilter] = useState("all");
+function CatalogPage({T,lang,products,onOrder,onDetail}) {
+  const [activeFilter,setActiveFilter] = useState("all");
   const filters = [{key:"all",label:T.f_all},{key:"face",label:T.f_face},{key:"lip",label:T.f_lip},{key:"body",label:T.f_body},{key:"hair",label:T.f_hair}];
-  const filtered = activeFilter==="all" ? products : products.filter(p=>p.category?.includes(activeFilter));
+  const filtered = activeFilter==="all"?products:products.filter(p=>p.category?.includes(activeFilter));
   return (
     <div className="catalog">
       <h2 className="section-title">{T.cat_title}</h2>
@@ -415,7 +457,9 @@ function CatalogPage({ T, lang, products, onOrder, onDetail }) {
       <div className="products-grid">
         {filtered.map(p=>(
           <div key={p.id} className="product-card" onClick={()=>onDetail(p)}>
-            <div className="product-img">{EMOJIS[p.id]||"🌿"}</div>
+            <div className="product-img">
+              {p.image_url?<img src={p.image_url} alt={p.name} />:<span>🌿</span>}
+            </div>
             <div className="product-info">
               <div className="product-cat">{p.category?.split(",").map(c=>CAT_LABELS[c.trim()]?.[lang]).filter(Boolean).join(" · ")}</div>
               <div className="product-name">{p.name}</div>
@@ -433,21 +477,21 @@ function CatalogPage({ T, lang, products, onOrder, onDetail }) {
   );
 }
 
-function OrderPage({ T, products, preselected, onSubmit, onBack }) {
-  const [form, setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home"});
-  const [cart, setCart] = useState(preselected ? [{productId:preselected.id,productName:preselected.name,qty:1}] : []);
-  const set = (k,v) => setForm(f=>({...f,[k]:v}));
+function OrderPage({T,products,preselected,onSubmit,onBack}) {
+  const [form,setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home"});
+  const [cart,setCart] = useState(preselected?[{productId:preselected.id,productName:preselected.name,qty:1}]:[]);
+  const set = (k,v)=>setForm(f=>({...f,[k]:v}));
   const isStopdesk = form.deliveryType==="stopdesk";
-  const availableStopdesks = form.wilaya && ANDERSON_STOPDESKS[form.wilaya] ? ANDERSON_STOPDESKS[form.wilaya] : [];
+  const availableStopdesks = form.wilaya&&ANDERSON_STOPDESKS[form.wilaya]?ANDERSON_STOPDESKS[form.wilaya]:[];
   const selectedStopdesk = availableStopdesks.find(s=>s.name===form.stopdesk);
-  const addToCart = (productId) => {
+  const addToCart = (productId)=>{
     const prod = products.find(p=>p.id===Number(productId));
     if (!prod||cart.find(i=>i.productId===prod.id)) return;
     setCart(prev=>[...prev,{productId:prod.id,productName:prod.name,qty:1}]);
   };
-  const updateCartQty = (productId,qty) => setCart(prev=>prev.map(i=>i.productId===productId?{...i,qty:Number(qty)}:i));
-  const removeFromCart = (productId) => setCart(prev=>prev.filter(i=>i.productId!==productId));
-  const handle = () => {
+  const updateCartQty = (productId,qty)=>setCart(prev=>prev.map(i=>i.productId===productId?{...i,qty:Number(qty)}:i));
+  const removeFromCart = (productId)=>setCart(prev=>prev.filter(i=>i.productId!==productId));
+  const handle = ()=>{
     if (!form.name||!form.phone||!form.wilaya||cart.length===0) return;
     if (isStopdesk&&!form.stopdesk) return;
     if (!isStopdesk&&!form.address) return;
@@ -525,14 +569,14 @@ function OrderPage({ T, products, preselected, onSubmit, onBack }) {
     </div>
   );
 }
-function AdminLogin({ T, onLogin, onBack }) {
-  const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
-  const [err, setErr] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const handle = async () => {
+function AdminLogin({T,onLogin,onBack}) {
+  const [email,setEmail] = useState("");
+  const [pass,setPass] = useState("");
+  const [err,setErr] = useState(false);
+  const [loading,setLoading] = useState(false);
+  const handle = async ()=>{
     setLoading(true);
-    const result = await sbAuth(email, pass);
+    const result = await sbAuth(email,pass);
     setLoading(false);
     if (result.success) onLogin(result.token);
     else setErr(true);
@@ -558,7 +602,7 @@ function AdminLogin({ T, onLogin, onBack }) {
   );
 }
 
-function AdminDashboard({ T, tab, setTab, orders, products, ingredients, onUpdateOrderStatus, onUpdateProductStock, onUpdateProductThreshold, onUpdateIngQty, onUpdateIngThreshold, onUpdateProductPrice, onUpdateProductDiscount, onDeleteOrder, onLogout }) {
+function AdminDashboard({T,tab,setTab,orders,products,ingredients,onUpdateOrderStatus,onUpdateProductStock,onUpdateProductThreshold,onUpdateIngQty,onUpdateIngThreshold,onUpdateProductPrice,onUpdateProductDiscount,onUpdateProductImage,onAddProduct,onDeleteProduct,onAddIngredient,onDeleteIngredient,onDeleteOrder,onLogout}) {
   const lowP = products.filter(p=>p.stock<=p.threshold).length;
   const lowI = ingredients.filter(i=>i.threshold>0&&i.qty<=i.threshold).length;
   const tabs = [{key:"orders",label:T.adm_orders,icon:"📋"},{key:"products",label:T.adm_products,icon:"📦"},{key:"ingredients",label:T.adm_ing,icon:"🧪"}];
@@ -582,17 +626,17 @@ function AdminDashboard({ T, tab, setTab, orders, products, ingredients, onUpdat
           <div className="stat-card"><div className="stat-num" style={{color:"var(--red)"}}>{lowI}</div><div className="stat-label">Low Ingredients</div></div>
         </div>
         {tab==="orders"&&<OrdersTab T={T} orders={orders} onUpdateStatus={onUpdateOrderStatus} onDeleteOrder={onDeleteOrder} />}
-        {tab==="products"&&<ProductsTab T={T} products={products} onUpdateStock={onUpdateProductStock} onUpdateThreshold={onUpdateProductThreshold} onUpdatePrice={onUpdateProductPrice} onUpdateDiscount={onUpdateProductDiscount} />}
-        {tab==="ingredients"&&<IngredientsTab T={T} ingredients={ingredients} onUpdateQty={onUpdateIngQty} onUpdateThreshold={onUpdateIngThreshold} />}
+        {tab==="products"&&<ProductsTab T={T} products={products} onUpdateStock={onUpdateProductStock} onUpdateThreshold={onUpdateProductThreshold} onUpdatePrice={onUpdateProductPrice} onUpdateDiscount={onUpdateProductDiscount} onUpdateImage={onUpdateProductImage} onAddProduct={onAddProduct} onDeleteProduct={onDeleteProduct} />}
+        {tab==="ingredients"&&<IngredientsTab T={T} ingredients={ingredients} onUpdateQty={onUpdateIngQty} onUpdateThreshold={onUpdateIngThreshold} onAddIngredient={onAddIngredient} onDeleteIngredient={onDeleteIngredient} />}
       </main>
     </div>
   );
 }
 
-function OrdersTab({ T, orders, onUpdateStatus, onDeleteOrder }) {
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterWilaya, setFilterWilaya] = useState("all");
+function OrdersTab({T,orders,onUpdateStatus,onDeleteOrder}) {
+  const [search,setSearch] = useState("");
+  const [filterStatus,setFilterStatus] = useState("all");
+  const [filterWilaya,setFilterWilaya] = useState("all");
   const filtered = orders.filter(o=>
     (filterStatus==="all"||o.status===filterStatus)&&
     (filterWilaya==="all"||o.wilaya===filterWilaya)&&
@@ -635,7 +679,7 @@ function OrdersTab({ T, orders, onUpdateStatus, onDeleteOrder }) {
                         <option value="confirmed">{T.s_confirmed}</option>
                         <option value="delivered">{T.s_delivered}</option>
                       </select>
-                      <button onClick={()=>{if(window.confirm("Delete this order?")) onDeleteOrder(o.id);}} style={{background:"#fde8e8",color:"var(--red)",border:"none",cursor:"pointer",padding:"4px 10px",borderRadius:3,fontSize:"0.75rem",fontFamily:"Jost"}}>🗑️</button>
+                      <button onClick={()=>{if(window.confirm("Delete this order?")) onDeleteOrder(o.id);}} className="btn-danger">🗑️</button>
                     </div>
                   </td>
                 </tr>
@@ -648,21 +692,76 @@ function OrdersTab({ T, orders, onUpdateStatus, onDeleteOrder }) {
   );
 }
 
-function ProductsTab({ T, products, onUpdateStock, onUpdateThreshold, onUpdatePrice, onUpdateDiscount }) {
-  const [edits, setEdits] = useState({});
-  const setEdit = (id,field,val) => setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
-  const save = (p) => {
+function ProductsTab({T,products,onUpdateStock,onUpdateThreshold,onUpdatePrice,onUpdateDiscount,onUpdateImage,onAddProduct,onDeleteProduct}) {
+  const [edits,setEdits] = useState({});
+  const [showAdd,setShowAdd] = useState(false);
+  const [newP,setNewP] = useState({name:"",category:"face",short_desc:"",full_desc:"",price:"",stock:0,threshold:0,discount_price:""});
+  const [uploading,setUploading] = useState({});
+  const fileRef = useRef({});
+  const setEdit = (id,field,val)=>setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
+  const save = (p)=>{
     if (edits[p.id]?.stock!==undefined) onUpdateStock(p.id,edits[p.id].stock);
     if (edits[p.id]?.threshold!==undefined) onUpdateThreshold(p.id,edits[p.id].threshold);
     if (edits[p.id]?.price!==undefined) onUpdatePrice(p.id,edits[p.id].price);
     if (edits[p.id]?.discount_price!==undefined) onUpdateDiscount(p.id,edits[p.id].discount_price);
     setEdits(e=>{const n={...e};delete n[p.id];return n;});
   };
+  const handlePhoto = async (p,file)=>{
+    if (!file) return;
+    setUploading(u=>({...u,[p.id]:true}));
+    const url = await uploadPhoto(file,p.id);
+    if (url) onUpdateImage(p.id,url);
+    setUploading(u=>({...u,[p.id]:false}));
+  };
+  const handleAdd = async ()=>{
+    if (!newP.name||!newP.price) return;
+    await onAddProduct({...newP,stock:Number(newP.stock),threshold:Number(newP.threshold),discount_price:newP.discount_price||null});
+    setNewP({name:"",category:"face",short_desc:"",full_desc:"",price:"",stock:0,threshold:0,discount_price:""});
+    setShowAdd(false);
+  };
   return (
     <div className="admin-card">
+      <button className="btn-add" onClick={()=>setShowAdd(true)}>+ Add New Product</button>
+      {showAdd&&(
+        <div className="modal-overlay" onClick={()=>setShowAdd(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <h3 className="modal-title">Add New Product</h3>
+            {[["name","Product Name"],["short_desc","Short Description"],["price","Price (e.g. 1200 DA)"],["discount_price","Discount Price (optional)"]].map(([k,l])=>(
+              <div className="form-group" key={k}>
+                <label className="form-label">{l}</label>
+                <input className="form-input" value={newP[k]} onChange={e=>setNewP(p=>({...p,[k]:e.target.value}))} />
+              </div>
+            ))}
+            <div className="form-group">
+              <label className="form-label">Full Description</label>
+              <textarea className="form-textarea" value={newP.full_desc} onChange={e=>setNewP(p=>({...p,full_desc:e.target.value}))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select className="form-select" value={newP.category} onChange={e=>setNewP(p=>({...p,category:e.target.value}))}>
+                {CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div style={{display:"flex",gap:12}}>
+              <div className="form-group" style={{flex:1}}>
+                <label className="form-label">Stock</label>
+                <input className="form-input" type="number" min="0" value={newP.stock} onChange={e=>setNewP(p=>({...p,stock:e.target.value}))} />
+              </div>
+              <div className="form-group" style={{flex:1}}>
+                <label className="form-label">Alert threshold</label>
+                <input className="form-input" type="number" min="0" value={newP.threshold} onChange={e=>setNewP(p=>({...p,threshold:e.target.value}))} />
+              </div>
+            </div>
+            <div style={{display:"flex",gap:12,marginTop:8}}>
+              <button className="btn-primary" style={{flex:1,padding:12}} onClick={handleAdd}>Add Product</button>
+              <button className="btn-outline" style={{flex:1,padding:12}} onClick={()=>setShowAdd(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{overflowX:"auto"}}>
         <table>
-          <thead><tr><th>Product</th><th>{T.stock_qty}</th><th>{T.threshold}</th><th>Price</th><th>Discount Price</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Photo</th><th>Product</th><th>{T.stock_qty}</th><th>{T.threshold}</th><th>Price</th><th>Discount</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {products.map(p=>{
               const isLow=p.stock<=p.threshold;
@@ -672,13 +771,23 @@ function ProductsTab({ T, products, onUpdateStock, onUpdateThreshold, onUpdatePr
               const dv=edits[p.id]?.discount_price??p.discount_price??'';
               return (
                 <tr key={p.id} className={isLow?"low":""}>
-                  <td><span style={{marginRight:8}}>{EMOJIS[p.id]||"🌿"}</span>{p.name}</td>
+                  <td>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                      {p.image_url?<img src={p.image_url} alt="" className="photo-preview" />:<div style={{width:60,height:60,background:"var(--beige2)",borderRadius:4,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"1.5rem"}}>🌿</div>}
+                      <input type="file" accept="image/*" style={{display:"none"}} ref={el=>fileRef.current[p.id]=el} onChange={e=>handlePhoto(p,e.target.files[0])} />
+                      <button onClick={()=>fileRef.current[p.id]?.click()} style={{background:"var(--beige2)",border:"none",cursor:"pointer",padding:"3px 8px",borderRadius:3,fontSize:"0.7rem",fontFamily:"Jost"}}>{uploading[p.id]?"⏳":"📷"}</button>
+                    </div>
+                  </td>
+                  <td><strong>{p.name}</strong><br/><span style={{fontSize:"0.72rem",color:"var(--muted)"}}>{p.category}</span></td>
                   <td><input className="qty-input" type="number" min="0" value={sv} onChange={e=>setEdit(p.id,"stock",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
                   <td><input className="qty-input" type="number" min="0" value={tv} onChange={e=>setEdit(p.id,"threshold",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
-                  <td><input className="qty-input" style={{width:90}} type="text" placeholder="e.g. 1200 DA" value={pv} onChange={e=>setEdit(p.id,"price",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
-                  <td><input className="qty-input" style={{width:90}} type="text" placeholder="Leave empty" value={dv} onChange={e=>setEdit(p.id,"discount_price",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
+                  <td><input className="qty-input" style={{width:90}} type="text" value={pv} onChange={e=>setEdit(p.id,"price",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
+                  <td><input className="qty-input" style={{width:90}} type="text" placeholder="Empty" value={dv} onChange={e=>setEdit(p.id,"discount_price",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
                   <td>{isLow?<span className="badge badge-low">{T.low_stock}</span>:<span className="badge badge-ok">OK</span>}</td>
-                  <td><button className="btn-save" onClick={()=>save(p)}>{T.save}</button></td>
+                  <td style={{display:"flex",gap:4,flexDirection:"column"}}>
+                    <button className="btn-save" onClick={()=>save(p)}>{T.save}</button>
+                    <button className="btn-danger" onClick={()=>{if(window.confirm("Delete this product?")) onDeleteProduct(p.id);}}>🗑️</button>
+                  </td>
                 </tr>
               );
             })}
@@ -689,21 +798,61 @@ function ProductsTab({ T, products, onUpdateStock, onUpdateThreshold, onUpdatePr
   );
 }
 
-function IngredientsTab({ T, ingredients, onUpdateQty, onUpdateThreshold }) {
-  const [edits, setEdits] = useState({});
-  const [search, setSearch] = useState("");
-  const [filterCat, setFilterCat] = useState("all");
-  const setEdit = (id,field,val) => setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
-  const save = (ing) => {
+function IngredientsTab({T,ingredients,onUpdateQty,onUpdateThreshold,onAddIngredient,onDeleteIngredient}) {
+  const [edits,setEdits] = useState({});
+  const [search,setSearch] = useState("");
+  const [filterCat,setFilterCat] = useState("all");
+  const [showAdd,setShowAdd] = useState(false);
+  const [newIng,setNewIng] = useState({name:"",category:"Base Ingredients",qty:0,threshold:0});
+  const setEdit = (id,field,val)=>setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
+  const save = (ing)=>{
     if (edits[ing.id]?.qty!==undefined) onUpdateQty(ing.id,edits[ing.id].qty);
     if (edits[ing.id]?.threshold!==undefined) onUpdateThreshold(ing.id,edits[ing.id].threshold);
     setEdits(e=>{const n={...e};delete n[ing.id];return n;});
+  };
+  const handleAdd = async ()=>{
+    if (!newIng.name) return;
+    await onAddIngredient({...newIng,qty:Number(newIng.qty),threshold:Number(newIng.threshold)});
+    setNewIng({name:"",category:"Base Ingredients",qty:0,threshold:0});
+    setShowAdd(false);
   };
   const cats = [...new Set(ingredients.map(i=>i.category))];
   const filtered = ingredients.filter(i=>(filterCat==="all"||i.category===filterCat)&&i.name.toLowerCase().includes(search.toLowerCase()));
   const grouped = cats.reduce((acc,cat)=>{const items=filtered.filter(i=>i.category===cat);if(items.length)acc[cat]=items;return acc;},{});
   return (
     <div className="admin-card">
+      <button className="btn-add" onClick={()=>setShowAdd(true)}>+ Add New Ingredient</button>
+      {showAdd&&(
+        <div className="modal-overlay" onClick={()=>setShowAdd(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <h3 className="modal-title">Add New Ingredient</h3>
+            <div className="form-group">
+              <label className="form-label">Name</label>
+              <input className="form-input" value={newIng.name} onChange={e=>setNewIng(i=>({...i,name:e.target.value}))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select className="form-select" value={newIng.category} onChange={e=>setNewIng(i=>({...i,category:e.target.value}))}>
+                {ING_CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div style={{display:"flex",gap:12}}>
+              <div className="form-group" style={{flex:1}}>
+                <label className="form-label">Quantity (g)</label>
+                <input className="form-input" type="number" min="0" value={newIng.qty} onChange={e=>setNewIng(i=>({...i,qty:e.target.value}))} />
+              </div>
+              <div className="form-group" style={{flex:1}}>
+                <label className="form-label">Alert threshold (g)</label>
+                <input className="form-input" type="number" min="0" value={newIng.threshold} onChange={e=>setNewIng(i=>({...i,threshold:e.target.value}))} />
+              </div>
+            </div>
+            <div style={{display:"flex",gap:12,marginTop:8}}>
+              <button className="btn-primary" style={{flex:1,padding:12}} onClick={handleAdd}>Add Ingredient</button>
+              <button className="btn-outline" style={{flex:1,padding:12}} onClick={()=>setShowAdd(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="search-bar">
         <input className="search-input" placeholder={T.search} value={search} onChange={e=>setSearch(e.target.value)} />
         <select className="select-filter" value={filterCat} onChange={e=>setFilterCat(e.target.value)}>
@@ -728,7 +877,10 @@ function IngredientsTab({ T, ingredients, onUpdateQty, onUpdateThreshold }) {
                       <td><input className="qty-input" type="number" min="0" value={qv} onChange={e=>setEdit(ing.id,"qty",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(ing)} /></td>
                       <td><input className="qty-input" type="number" min="0" value={tv} onChange={e=>setEdit(ing.id,"threshold",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(ing)} /></td>
                       <td>{isLow?<span className="badge badge-low">{T.low_stock}</span>:<span className="badge badge-ok">OK</span>}</td>
-                      <td><button className="btn-save" onClick={()=>save(ing)}>{T.save}</button></td>
+                      <td style={{display:"flex",gap:4"}}>
+                        <button className="btn-save" onClick={()=>save(ing)}>{T.save}</button>
+                        <button className="btn-danger" onClick={()=>{if(window.confirm("Delete this ingredient?")) onDeleteIngredient(ing.id);}}>🗑️</button>
+                      </td>
                     </tr>
                   );
                 })}
