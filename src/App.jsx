@@ -320,7 +320,7 @@ export default function App() {
     if (inserted[0]) setProducts(prev=>[...prev,inserted[0]]);
   };
   const deleteProduct = async (id) => {
-    await sb(`products?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    await sb(`products?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal","Content-Type":"application/json"}});
     setProducts(prev=>prev.filter(p=>p.id!==id));
   };
   const updateIngQty = async (id,qty) => {
