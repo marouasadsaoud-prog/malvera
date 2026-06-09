@@ -782,7 +782,12 @@ function ProductsTab({T,products,onUpdateStock,onUpdateThreshold,onUpdatePrice,o
                       <button onClick={()=>fileRef.current[p.id]?.click()} style={{background:"var(--beige2)",border:"none",cursor:"pointer",padding:"3px 8px",borderRadius:3,fontSize:"0.7rem",fontFamily:"Jost"}}>{uploading[p.id]?"⏳":"📷"}</button>
                     </div>
                   </td>
-                  <td><strong>{p.name}</strong><br/><span style={{fontSize:"0.72rem",color:"var(--muted)"}}>{p.category}</span></td>
+                <td>
+  <strong>{p.name}</strong><br/>
+  <span style={{fontSize:"0.72rem",color:"var(--muted)"}}>{p.category}</span><br/>
+  <input className="qty-input" style={{width:"100%",marginTop:4}} type="text" placeholder="Short desc" value={edits[p.id]?.short_desc??p.short_desc??''} onChange={e=>setEdit(p.id,"short_desc",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /><br/>
+  <textarea style={{width:"100%",marginTop:4,padding:"4px 8px",border:"1px solid var(--beige2)",borderRadius:3,fontSize:"0.8rem",fontFamily:"Jost",resize:"vertical",minHeight:50}} placeholder="Full desc" value={edits[p.id]?.full_desc??p.full_desc??''} onChange={e=>setEdit(p.id,"full_desc",e.target.value)} />
+</td>
                   <td><input className="qty-input" type="number" min="0" value={sv} onChange={e=>setEdit(p.id,"stock",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
                   <td><input className="qty-input" type="number" min="0" value={tv} onChange={e=>setEdit(p.id,"threshold",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
                   <td><input className="qty-input" style={{width:90}} type="text" value={pv} onChange={e=>setEdit(p.id,"price",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(p)} /></td>
