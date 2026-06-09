@@ -699,11 +699,15 @@ function ProductsTab({T,products,onUpdateStock,onUpdateThreshold,onUpdatePrice,o
   const [uploading,setUploading] = useState({});
   const fileRef = useRef({});
   const setEdit = (id,field,val)=>setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
-  const save = (p)=>{
-    if (edits[p.id]?.stock!==undefined) onUpdateStock(p.id,edits[p.id].stock);
-    if (edits[p.id]?.threshold!==undefined) onUpdateThreshold(p.id,edits[p.id].threshold);
-    if (edits[p.id]?.price!==undefined) onUpdatePrice(p.id,edits[p.id].price);
-    if (edits[p.id]?.discount_price!==undefined) onUpdateDiscount(p.id,edits[p.id].discount_price);
+  const save = async (p)=>{
+    const patch = {};
+    if (edits[p.id]?.stock!==undefined){patch.stock=Number(edits[p.id].stock);onUpdateStock(p.id,edits[p.id].stock);}
+    if (edits[p.id]?.threshold!==undefined){patch.threshold=Number(edits[p.id].threshold);onUpdateThreshold(p.id,edits[p.id].threshold);}
+    if (edits[p.id]?.price!==undefined){patch.price=edits[p.id].price;onUpdatePrice(p.id,edits[p.id].price);}
+    if (edits[p.id]?.discount_price!==undefined){patch.discount_price=edits[p.id].discount_price||null;onUpdateDiscount(p.id,edits[p.id].discount_price);}
+    if (edits[p.id]?.short_desc!==undefined||edits[p.id]?.full_desc!==undefined){
+      await sb(`products?id=eq.${p.id}`,{method:"PATCH",body:JSON.stringify({short_desc:edits[p.id]?.short_desc??p.short_desc,full_desc:edits[p.id]?.full_desc??p.full_desc})});
+    }
     setEdits(e=>{const n={...e};delete n[p.id];return n;});
   };
   const handlePhoto = async (p,file)=>{
