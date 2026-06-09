@@ -338,7 +338,7 @@ export default function App() {
     if (inserted[0]) setIngredients(prev=>[...prev,inserted[0]]);
   };
   const deleteIngredient = async (id) => {
-    await sb(`ingredients?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    await sb(`ingredients?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal","Content-Type":"application/json"}});
     setIngredients(prev=>prev.filter(i=>i.id!==id));
   };
 
