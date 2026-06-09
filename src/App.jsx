@@ -877,7 +877,7 @@ function IngredientsTab({T,ingredients,onUpdateQty,onUpdateThreshold,onAddIngred
                       <td><input className="qty-input" type="number" min="0" value={qv} onChange={e=>setEdit(ing.id,"qty",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(ing)} /></td>
                       <td><input className="qty-input" type="number" min="0" value={tv} onChange={e=>setEdit(ing.id,"threshold",e.target.value)} onKeyDown={e=>e.key==="Enter"&&save(ing)} /></td>
                       <td>{isLow?<span className="badge badge-low">{T.low_stock}</span>:<span className="badge badge-ok">OK</span>}</td>
-                      <td style={{display:"flex",gap:4"}}>
+                      <td style={{display:"flex",gap:4}}>
                         <button className="btn-save" onClick={()=>save(ing)}>{T.save}</button>
                         <button className="btn-danger" onClick={()=>{if(window.confirm("Delete this ingredient?")) onDeleteIngredient(ing.id);}}>🗑️</button>
                       </td>
