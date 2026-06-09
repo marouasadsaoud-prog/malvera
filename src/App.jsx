@@ -290,7 +290,7 @@ export default function App() {
     setOrders(prev=>prev.map(o=>o.id===id?{...o,status}:o));
   };
   const deleteOrder = async (id) => {
-    await sb(`orders?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal"}});
+    await sb(`orders?id=eq.${id}`,{method:"DELETE",headers:{"Prefer":"return=minimal","Content-Type":"application/json"}});
     setOrders(prev=>prev.filter(o=>o.id!==id));
   };
   const updateProductStock = async (id,stock) => {
