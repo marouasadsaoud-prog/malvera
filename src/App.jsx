@@ -302,7 +302,7 @@ export default function App() {
         }
       }
       if (inserted[0]) setOrders(prev=>[inserted[0],...prev]);
-      tgNotify(`🛍️ <b>New Order!</b>\n👤 ${data.name}\n📞 ${data.phone}\n📦 ${data.items.map(i=>`${i.productName} x${i.qty}`).join("\n📦 ")}\n📍 ${data.wilaya} - ${data.deliveryType==="stopdesk"?"Stop Desk 🏢":"Home Delivery 🏠"}\n${data.deliveryType==="stopdesk"?`🏢 ${data.stopdesk}`:`🏘️ ${data.commune||""} - ${data.address}`}`);
+      sendOrderEmail(data);
       setPage("confirm");
     } catch(e){console.error(e);}
   };
