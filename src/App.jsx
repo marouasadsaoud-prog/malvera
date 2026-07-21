@@ -2,9 +2,31 @@ import { useState, useEffect, useRef } from "react";
 
 const SUPABASE_URL = "https://oknqxjijpebnyogcpeee.supabase.co";
 const SUPABASE_KEY = "sb_publishable_f2GocL92eVimF-c3ugdnGQ_izZygETk";
-const TG_TOKEN = "8852249091:AAFeRA4zBd0gFAbyssou90wR-TCZFLi0Pn0";
-const TG_CHAT = "6269196175";
+const RESEND_API_KEY = "re_H4cFqi37_HV8FC8CbxkR9pAexopJ3nhqA";
 
+const sendOrderEmail = async (data) => {
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${RESEND_API_KEY}`
+    },
+    body: JSON.stringify({
+      from: "Malvera Orders <onboarding@resend.dev>",
+      to: "order.malvera@gmail.com",
+      subject: `🛍️ New Order from ${data.name}`,
+      html: `
+        <h2>New Order Received!</h2>
+        <p><strong>Customer:</strong> ${data.name}</p>
+        <p><strong>Phone:</strong> ${data.phone}</p>
+        <p><strong>Wilaya:</strong> ${data.wilaya}</p>
+        <p><strong>Delivery:</strong> ${data.deliveryType === "stopdesk" ? `Stop Desk — ${data.stopdesk}` : `Home — ${data.commune || ""} ${data.address}`}</p>
+        <h3>Products:</h3>
+        <ul>${data.items.map(i => `<li>${i.productName} x${i.qty}</li>`).join("")}</ul>
+      `
+    })
+  });
+};
 const tgNotify = async (msg) => {
   await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
     method:"POST",
