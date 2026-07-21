@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 const SUPABASE_URL = "https://oknqxjijpebnyogcpeee.supabase.co";
 const SUPABASE_KEY = "sb_publishable_f2GocL92eVimF-c3ugdnGQ_izZygETk";
-const RESEND_API_KEY = "re_H4cFqi37_HV8FC8CbxkR9pAexopJ3nhqA";
+const RESEND_API_KEY = import.meta.env.VITE_RESEND_KEY;
 
 const sendOrderEmail = async (data) => {
   await fetch("https://api.resend.com/emails", {
