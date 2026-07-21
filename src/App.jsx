@@ -319,7 +319,7 @@ export default function App() {
     await sb(`products?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({stock:Number(stock)})});
     setProducts(prev=>prev.map(p=>p.id===id?{...p,stock:Number(stock)}:p));
     const up = products.find(p=>p.id===id);
-    if (up&&Number(stock)<=up.threshold) tgNotify(`⚠️ <b>Low Stock Alert!</b>\n📦 ${up.name}\n🔢 Only ${stock} units left!`);
+    if (up&&Number(stock)<=up.threshold);
   };
   const updateProductThreshold = async (id,threshold) => {
     await sb(`products?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({threshold:Number(threshold)})});
