@@ -3,6 +3,11 @@ import { useState, useEffect, useRef, Fragment } from "react";
 const SUPABASE_URL = "https://oknqxjijpebnyogcpeee.supabase.co";
 const SUPABASE_KEY = "sb_publishable_f2GocL92eVimF-c3ugdnGQ_izZygETk";
 
+// Your contact details (shown to customers after they order)
+const CONTACT_PHONE = "0541913440";
+const CONTACT_INSTAGRAM = "malveraofficial";
+const CONTACT_EMAIL = "malveraofficiel@gmail.com";
+
 const sb = async (path, opts = {}) => {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...opts,
@@ -40,6 +45,15 @@ const uploadPhoto = async (file, productId) => {
   });
   if (!res.ok) return null;
   return `${SUPABASE_URL}/storage/v1/object/public/products/${path}`;
+};
+
+const toNum = (v) => parseInt(String(v ?? "").replace(/[^\d]/g, ""), 10) || 0;
+const money = (n) => `${Number(n || 0).toLocaleString("en-US")} DA`;
+const unitPrice = (p) => toNum(p.discount_price) || toNum(p.price);
+const getFee = (delivery, wilaya, type) => {
+  const row = delivery.find((d) => d.wilaya === wilaya);
+  if (!row) return null;
+  return Number(type === "stopdesk" ? row.stopdesk : row.home);
 };
 
 const WILAYAS = ["Adrar","Chlef","Laghouat","Oum El Bouaghi","Batna","Béjaïa","Biskra","Béchar","Blida","Bouira","Tamanrasset","Tébessa","Tlemcen","Tiaret","Tizi Ouzou","Alger","Djelfa","Jijel","Sétif","Saïda","Skikda","Sidi Bel Abbès","Annaba","Guelma","Constantine","Médéa","Mostaganem","M'Sila","Mascara","Ouargla","Oran","El Bayadh","Illizi","Bordj Bou Arréridj","Boumerdès","El Tarf","Tindouf","Tissemsilt","El Oued","Khenchela","Souk Ahras","Tipaza","Mila","Aïn Defla","Naâma","Aïn Témouchent","Ghardaïa","Relizane","Timimoun","Bordj Badji Mokhtar","Ouled Djellal","Béni Abbès","In Salah","In Guezzam","Touggourt","Djanet","El M'Ghair","El Meniaa"];
@@ -105,8 +119,10 @@ const ING_CATEGORIES = ["Base Ingredients","Actives & Acids","Preservatives","Wa
 const PriceDisplay = ({price,discount_price}) => discount_price?(<span><span style={{textDecoration:"line-through",color:"var(--muted)",fontSize:"0.85rem",marginRight:8}}>{price}</span><span style={{color:"var(--red)",fontWeight:600}}>{discount_price}</span></span>):<span>{price}</span>;
 
 const TR = {
-  en:{nav_home:"Home",nav_catalog:"Catalog",nav_order:"Order",hero_cta:"Explore Collection",hero_sub:"Pure. Natural. Handcrafted.",v_natural:"Natural",v_handmade:"Handmade",v_trad:"Traditional",v_tallow:"Tallow-Based",cat_title:"Our Collection",f_all:"All",f_face:"Face",f_lip:"Lip Care",f_body:"Body",f_hair:"Hair",order_btn:"Order Now",details_btn:"Details",back:"← Back",order_title:"Place Your Order",f_name:"Full Name",f_phone:"Phone Number",f_wilaya:"Wilaya",f_addr:"Delivery Address",sel_wilaya:"Select your wilaya",submit:"Place Order",conf_title:"Order Received!",conf_msg:"Thank you! We will contact you shortly to confirm your order.",conf_back:"Back to Shop",brand_desc:"At Malvera, we believe in timeless beauty rooted in tradition. Every product is handcrafted with pure, natural ingredients — centered around the power of beef tallow — to nourish, strengthen, and restore balance to your skin, lips, and hair.",adm_login:"Admin Login",adm_email:"Email",adm_pass:"Password",adm_signin:"Sign In",adm_wrong:"Invalid credentials",adm_orders:"Orders",adm_products:"Products",adm_ing:"Ingredients",adm_logout:"Logout",s_pending:"Pending",s_confirmed:"Confirmed",s_delivered:"Delivered",low_stock:"Low Stock",save:"Save",search:"Search...",c_name:"Customer",c_product:"Products",c_qty:"Qty",c_wilaya:"Wilaya",c_phone:"Phone",c_date:"Date",c_status:"Status",no_orders:"No orders yet.",threshold:"Alert",stock_qty:"Stock",loading:"Loading...",del_type:"Delivery Type",del_home:"Home Delivery",del_stop:"Stop Desk",f_commune:"Commune",f_stopdesk:"Select Stop Desk",sel_commune:"Enter your commune",sel_stopdesk:"Select a stop desk",view_map:"View on map"},
-  ar:{nav_home:"الرئيسية",nav_catalog:"المنتجات",nav_order:"اطلب الآن",hero_cta:"اكتشفي المجموعة",hero_sub:"طبيعي. نقي. صنع بالحب.",v_natural:"طبيعي",v_handmade:"صنع يدوي",v_trad:"تراثي",v_tallow:"زبدة الشحم",cat_title:"مجموعتنا",f_all:"الكل",f_face:"الوجه",f_lip:"العناية بالشفاه",f_body:"الجسم",f_hair:"الشعر",order_btn:"اطلبي الآن",details_btn:"التفاصيل",back:"→ رجوع",order_title:"أرسلي طلبك",f_name:"الاسم الكامل",f_phone:"رقم الهاتف",f_wilaya:"الولاية",f_addr:"عنوان التوصيل",sel_wilaya:"اختاري ولايتك",submit:"إرسال الطلب",conf_title:"تم استلام طلبك!",conf_msg:"شكراً لكِ! سنتواصل معكِ قريباً لتأكيد طلبك.",conf_back:"العودة للمتجر",brand_desc:"في Malvera، نؤمن بالجمال الخالد المستوحى من الموروث. كل منتج مصنوع يدوياً من مكونات طبيعية خالصة — في قلبها شحم البقر — لتغذية بشرتكِ وشعركِ وشفاهكِ وإعادة توازنها.",adm_login:"تسجيل الدخول",adm_email:"البريد",adm_pass:"كلمة المرور",adm_signin:"دخول",adm_wrong:"بيانات غير صحيحة",adm_orders:"الطلبات",adm_products:"المنتجات",adm_ing:"المكونات",adm_logout:"خروج",s_pending:"قيد الانتظار",s_confirmed:"مؤكد",s_delivered:"تم التوصيل",low_stock:"مخزون منخفض",save:"حفظ",search:"بحث...",c_name:"العميلة",c_product:"المنتجات",c_qty:"الكمية",c_wilaya:"الولاية",c_phone:"الهاتف",c_date:"التاريخ",c_status:"الحالة",no_orders:"لا توجد طلبات بعد.",threshold:"حد التنبيه",stock_qty:"الكمية",loading:"جاري التحميل...",del_type:"نوع التوصيل",del_home:"توصيل للمنزل",del_stop:"نقطة توقف",f_commune:"البلدية",f_stopdesk:"اختاري نقطة التوقف",sel_commune:"أدخلي بلديتك",sel_stopdesk:"اختاري نقطة التوقف",view_map:"عرض على الخريطة"}
+  en:{nav_home:"Home",nav_catalog:"Catalog",nav_order:"Order",hero_cta:"Explore Collection",hero_sub:"Pure. Natural. Handcrafted.",v_natural:"Natural",v_handmade:"Handmade",v_trad:"Traditional",v_tallow:"Tallow-Based",cat_title:"Our Collection",f_all:"All",f_face:"Face",f_lip:"Lip Care",f_body:"Body",f_hair:"Hair",details_btn:"Details",back:"← Back",order_title:"Your Order",f_name:"Full Name",f_phone:"Phone Number",f_wilaya:"Wilaya",f_addr:"Delivery Address",sel_wilaya:"Select your wilaya",submit:"Place Order",conf_title:"Order Received!",conf_back:"Back to Shop",brand_desc:"At Malvera, we believe in timeless beauty rooted in tradition. Every product is handcrafted with pure, natural ingredients — centered around the power of beef tallow — to nourish, strengthen, and restore balance to your skin, lips, and hair.",adm_login:"Admin Login",adm_email:"Email",adm_pass:"Password",adm_signin:"Sign In",adm_wrong:"Invalid credentials",adm_orders:"Orders",adm_products:"Products",adm_ing:"Ingredients",adm_delivery:"Delivery",adm_logout:"Logout",s_pending:"Pending",s_confirmed:"Confirmed",s_delivered:"Delivered",s_cancelled:"Cancelled",s_returned:"Returned",low_stock:"Low Stock",save:"Save",search:"Search...",c_name:"Customer",c_order:"Order",c_product:"Products",c_qty:"Qty",c_total:"Total",c_wilaya:"Wilaya",c_phone:"Phone",c_date:"Date",c_status:"Status",no_orders:"No orders yet.",threshold:"Alert",stock_qty:"Stock",loading:"Loading...",del_type:"Delivery Type",del_home:"Home Delivery",del_stop:"Stop Desk",f_commune:"Commune",f_stopdesk:"Select Stop Desk",sel_commune:"Enter your commune",sel_stopdesk:"Select a stop desk",view_map:"View on map",home_price:"Home price (DA)",stop_price:"Stop desk price (DA)",sales:"Sales (delivered)",
+    add_basket:"Add to basket",view_basket:"View basket",choose_products:"Choose your products",your_basket:"Your basket",basket_empty:"Your basket is empty. Add products above.",your_details:"Your details",subtotal:"Subtotal",delivery_fee:"Delivery",total:"Total",fee_tbc:"To be confirmed",select_wilaya_fee:"Select your wilaya",err_basket:"Please add at least one product to your basket.",err_fill:"Please fill in all the required fields.",err_phone:"Please enter a valid phone number (example: 0555123456).",err_send:"Sorry, your order could not be sent. Please try again.",order_number:"Order number",your_order:"Your order",keep_number:"Please keep your order number.",conf_msg:"Thank you! We have received your order and we will contact you very soon to confirm it.",contact_us:"For more information, you can contact us:",lbl_phone:"Phone",lbl_instagram:"Instagram",lbl_email:"Email",delivery_to:"Delivery"},
+  ar:{nav_home:"الرئيسية",nav_catalog:"المنتجات",nav_order:"الطلب",hero_cta:"اكتشفي المجموعة",hero_sub:"طبيعي. نقي. صنع بالحب.",v_natural:"طبيعي",v_handmade:"صنع يدوي",v_trad:"تراثي",v_tallow:"زبدة الشحم",cat_title:"مجموعتنا",f_all:"الكل",f_face:"الوجه",f_lip:"العناية بالشفاه",f_body:"الجسم",f_hair:"الشعر",details_btn:"التفاصيل",back:"→ رجوع",order_title:"طلبك",f_name:"الاسم الكامل",f_phone:"رقم الهاتف",f_wilaya:"الولاية",f_addr:"عنوان التوصيل",sel_wilaya:"اختاري ولايتك",submit:"إرسال الطلب",conf_title:"تم استلام طلبك!",conf_back:"العودة للمتجر",brand_desc:"في Malvera، نؤمن بالجمال الخالد المستوحى من الموروث. كل منتج مصنوع يدوياً من مكونات طبيعية خالصة — في قلبها شحم البقر — لتغذية بشرتكِ وشعركِ وشفاهكِ وإعادة توازنها.",adm_login:"تسجيل الدخول",adm_email:"البريد",adm_pass:"كلمة المرور",adm_signin:"دخول",adm_wrong:"بيانات غير صحيحة",adm_orders:"الطلبات",adm_products:"المنتجات",adm_ing:"المكونات",adm_delivery:"التوصيل",adm_logout:"خروج",s_pending:"قيد الانتظار",s_confirmed:"مؤكد",s_delivered:"تم التوصيل",s_cancelled:"ملغى",s_returned:"مرتجع",low_stock:"مخزون منخفض",save:"حفظ",search:"بحث...",c_name:"العميلة",c_order:"الطلب",c_product:"المنتجات",c_qty:"الكمية",c_total:"المجموع",c_wilaya:"الولاية",c_phone:"الهاتف",c_date:"التاريخ",c_status:"الحالة",no_orders:"لا توجد طلبات بعد.",threshold:"حد التنبيه",stock_qty:"الكمية",loading:"جاري التحميل...",del_type:"نوع التوصيل",del_home:"توصيل للمنزل",del_stop:"نقطة توقف",f_commune:"البلدية",f_stopdesk:"اختاري نقطة التوقف",sel_commune:"أدخلي بلديتك",sel_stopdesk:"اختاري نقطة التوقف",view_map:"عرض على الخريطة",home_price:"سعر التوصيل للمنزل (دج)",stop_price:"سعر نقطة التوقف (دج)",sales:"المبيعات (المسلّمة)",
+    add_basket:"أضيفي إلى السلة",view_basket:"عرض السلة",choose_products:"اختاري منتجاتك",your_basket:"سلتك",basket_empty:"سلتك فارغة. أضيفي منتجات من الأعلى.",your_details:"معلوماتك",subtotal:"المجموع الجزئي",delivery_fee:"التوصيل",total:"المجموع",fee_tbc:"سيتم تأكيده",select_wilaya_fee:"اختاري الولاية",err_basket:"يرجى إضافة منتج واحد على الأقل إلى السلة.",err_fill:"يرجى ملء جميع الحقول المطلوبة.",err_phone:"يرجى إدخال رقم هاتف صحيح (مثال: 0555123456).",err_send:"عذراً، تعذّر إرسال طلبك. يرجى المحاولة مرة أخرى.",order_number:"رقم الطلب",your_order:"طلبك",keep_number:"يرجى الاحتفاظ برقم الطلب.",conf_msg:"شكراً لكِ! لقد استلمنا طلبك وسنتواصل معكِ قريباً جداً لتأكيده.",contact_us:"لمزيد من المعلومات يمكنكِ التواصل معنا:",lbl_phone:"الهاتف",lbl_instagram:"إنستغرام",lbl_email:"البريد الإلكتروني",delivery_to:"التوصيل"}
 };
 
 const CSS = `
@@ -118,11 +134,13 @@ body{font-family:'Jost',sans-serif;background:var(--cream);color:var(--text);min
 h1,h2,h3{font-family:'Cormorant Garamond',serif;}
 img{max-width:100%;}
 .rtl{direction:rtl;text-align:right;}.ltr{direction:ltr;text-align:left;}
+.muted{color:var(--muted);font-size:0.9rem;}
 .nav{position:sticky;top:0;z-index:100;background:rgba(245,237,224,0.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--beige2);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:64px;box-shadow:var(--shadow2);}
 .nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:600;color:var(--mocha);letter-spacing:4px;text-transform:uppercase;cursor:pointer;}
 .nav-links{display:flex;gap:24px;align-items:center;}
-.nav-link{background:none;border:none;cursor:pointer;font-family:'Jost';font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--mocha2);transition:color 0.2s;}
+.nav-link{background:none;border:none;cursor:pointer;font-family:'Jost';font-size:0.78rem;letter-spacing:2px;text-transform:uppercase;color:var(--mocha2);transition:color 0.2s;display:inline-flex;align-items:center;}
 .nav-link:hover,.nav-link.active{color:var(--gold);}
+.cart-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-inline-start:5px;border-radius:9px;background:var(--gold);color:var(--mocha);font-size:0.65rem;font-weight:600;letter-spacing:0;}
 .lang-btn{background:var(--mocha);color:var(--cream);border:none;cursor:pointer;padding:6px 14px;border-radius:20px;font-size:0.75rem;font-family:'Jost';transition:background 0.2s;}
 .lang-btn:hover{background:var(--mocha2);}
 .hero{min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--beige) 0%,var(--cream) 50%,var(--beige2) 100%);text-align:center;padding:60px 24px;position:relative;}
@@ -157,7 +175,11 @@ img{max-width:100%;}
 .product-name{font-size:1.15rem;font-weight:600;color:var(--mocha);margin-bottom:6px;font-family:'Cormorant Garamond';}
 .product-short{font-size:0.83rem;color:var(--muted);line-height:1.6;margin-bottom:14px;}
 .product-price{font-size:1rem;color:var(--mocha);font-weight:500;margin-bottom:14px;}
-.product-actions{display:flex;gap:8px;}
+.product-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.stepper{display:flex;align-items:center;width:132px;height:40px;border:1px solid var(--beige2);border-radius:4px;overflow:hidden;background:var(--white);flex-shrink:0;}
+.stepper button{width:40px;height:100%;border:none;background:var(--beige);cursor:pointer;font-size:1.2rem;color:var(--mocha);}
+.stepper input{flex:1;min-width:0;width:100%;height:100%;border:none;text-align:center;font-family:'Jost';font-size:16px;outline:none;background:var(--white);-moz-appearance:textfield;}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .detail{max-width:900px;margin:0 auto;padding:40px 32px;}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
 .detail-img{height:380px;background:linear-gradient(135deg,var(--beige) 0%,var(--beige2) 100%);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:6rem;overflow:hidden;}
@@ -165,17 +187,52 @@ img{max-width:100%;}
 .detail-title{font-size:2.2rem;font-weight:300;color:var(--mocha);margin-bottom:8px;font-style:italic;}
 .detail-price{font-size:1.3rem;color:var(--gold);font-weight:500;margin-bottom:20px;}
 .detail-desc{color:var(--mocha2);line-height:1.9;font-size:0.95rem;margin-bottom:28px;font-weight:300;}
-.order-page{max-width:580px;margin:0 auto;padding:48px 24px;}
+.order-page{max-width:760px;margin:0 auto;padding:48px 24px;}
 .order-title{font-size:2rem;font-weight:300;font-style:italic;color:var(--mocha);margin-bottom:8px;}
+.step-title{font-family:'Cormorant Garamond',serif;font-size:1.45rem;color:var(--mocha);font-style:italic;margin:30px 0 14px;}
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.pick-card{background:var(--white);border:2px solid var(--beige2);border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:8px;transition:border-color 0.2s;}
+.pick-card.selected{border-color:var(--gold);}
+.pick-card>:last-child{margin-top:auto;}
+.pick-img{height:120px;border-radius:4px;overflow:hidden;background:linear-gradient(135deg,var(--beige),var(--beige2));display:flex;align-items:center;justify-content:center;font-size:2.2rem;}
+.pick-img img{width:100%;height:100%;object-fit:cover;}
+.pick-name{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.05rem;color:var(--mocha);line-height:1.2;}
+.pick-price{font-size:0.85rem;color:var(--mocha2);}
+.pick-card .stepper{width:100%;}
+.pick-add{padding:11px 8px !important;font-size:0.7rem !important;letter-spacing:1px !important;}
+.basket{background:var(--white);border:1px solid var(--beige2);border-radius:6px;overflow:hidden;}
+.basket-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--beige2);}
+.basket-thumb{width:46px;height:46px;border-radius:4px;overflow:hidden;background:var(--beige2);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.basket-thumb img{width:100%;height:100%;object-fit:cover;}
+.basket-info{flex:1;min-width:0;}
+.basket-name{font-size:0.9rem;font-weight:500;}
+.basket-unit{font-size:0.75rem;color:var(--muted);}
+.basket-line{font-weight:500;font-size:0.9rem;white-space:nowrap;}
+.basket-x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:8px;}
+.basket-sub{display:flex;justify-content:space-between;padding:12px;background:var(--beige);font-size:0.92rem;}
+.totals{background:var(--white);border:1px solid var(--beige2);border-radius:6px;padding:14px 16px;margin:26px 0 16px;}
+.totals>div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:0.92rem;}
+.totals .grand{border-top:1px solid var(--beige2);margin-top:6px;padding-top:12px;font-size:1.15rem;font-weight:600;color:var(--mocha);}
+.form-error{background:#fde8e8;color:var(--red);padding:12px 14px;border-radius:4px;font-size:0.85rem;margin-bottom:14px;}
+.cart-bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:120;max-width:560px;width:calc(100% - 24px);margin:0 auto;background:var(--mocha);color:var(--cream);border:none;border-radius:8px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;box-shadow:0 6px 24px rgba(0,0,0,0.25);font-family:'Jost';font-size:0.9rem;}
 .form-group{margin-bottom:20px;}
 .form-label{display:block;font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 .form-input,.form-select,.form-textarea{width:100%;padding:12px 16px;border:1px solid var(--beige2);border-radius:2px;font-family:'Jost';font-size:0.9rem;color:var(--text);background:var(--white);outline:none;transition:border-color 0.2s;}
 .form-textarea{min-height:80px;resize:vertical;}
 .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--gold);}
-.confirm{text-align:center;padding:80px 24px;}
-.confirm-icon{font-size:4rem;margin-bottom:24px;}
-.confirm-title{font-size:2.2rem;font-style:italic;font-weight:300;color:var(--mocha);margin-bottom:16px;}
-.confirm-msg{color:var(--muted);line-height:1.8;margin-bottom:36px;}
+.confirm{max-width:560px;margin:0 auto;text-align:center;padding:70px 20px;}
+.confirm-icon{font-size:4rem;margin-bottom:16px;}
+.confirm-title{font-size:2.2rem;font-style:italic;font-weight:300;color:var(--mocha);margin-bottom:12px;}
+.confirm-msg{color:var(--mocha2);line-height:1.8;margin-bottom:22px;}
+.order-no{display:inline-block;margin:6px 0 22px;padding:10px 22px;border:1px dashed var(--gold);border-radius:6px;font-size:1rem;color:var(--mocha2);}
+.order-no strong{font-size:1.6rem;color:var(--mocha);margin-inline-start:8px;font-family:'Cormorant Garamond',serif;}
+.receipt{background:var(--white);border:1px solid var(--beige2);border-radius:6px;padding:16px;text-align:start;margin-bottom:22px;box-shadow:var(--shadow2);}
+.receipt-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-style:italic;color:var(--mocha);margin-bottom:8px;}
+.receipt-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:0.9rem;}
+.receipt-row.grand{border-top:1px solid var(--beige2);margin-top:6px;padding-top:12px;font-weight:600;font-size:1.05rem;color:var(--mocha);}
+.receipt-meta{margin-top:12px;padding-top:12px;border-top:1px dashed var(--beige2);font-size:0.82rem;color:var(--muted);line-height:1.7;}
+.contact-box{background:var(--beige);border-radius:6px;padding:16px;margin:0 0 26px;text-align:start;line-height:2;font-size:0.92rem;}
+.contact-box a{color:var(--mocha);font-weight:500;}
 .admin-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--mocha);padding:16px;}
 .login-card{background:var(--cream);padding:48px 40px;border-radius:4px;width:100%;max-width:380px;text-align:center;}
 .login-logo{font-size:2rem;letter-spacing:4px;font-weight:600;color:var(--gold);margin-bottom:8px;font-family:'Cormorant Garamond';}
@@ -198,6 +255,8 @@ tr.low{background:#fff5f0;}
 .badge-pending{background:#fef3cd;color:#856404;}
 .badge-confirmed{background:#d1edff;color:#0a5a8a;}
 .badge-delivered{background:#d4edda;color:#155724;}
+.badge-cancelled{background:#fde8e8;color:#c0392b;}
+.badge-returned{background:#ece3f7;color:#6b3fa0;}
 .badge-low{background:#fde8e8;color:var(--red);}
 .badge-ok{background:#d4edda;color:#155724;}
 .status-select{padding:4px 8px;border:1px solid var(--beige2);border-radius:3px;font-size:0.8rem;font-family:'Jost';background:var(--white);cursor:pointer;}
@@ -251,16 +310,19 @@ tr.low{background:#fff5f0;}
   .product-name{font-size:1rem;}
   .product-short{font-size:0.74rem;line-height:1.45;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
   .product-price{font-size:0.9rem;margin-bottom:10px;}
-  .product-actions{flex-direction:column;}
-  .product-actions button{width:100%;padding:11px 8px !important;}
+  .product-actions{flex-direction:column;align-items:stretch;}
+  .product-actions>button{width:100%;padding:11px 8px !important;}
+  .product-actions .stepper{width:100%;}
   .detail{padding:20px 14px;}
   .detail-grid{grid-template-columns:1fr;gap:22px;}
   .detail-img{height:320px;}
   .detail-title{font-size:1.8rem;}
-  .order-page{padding:28px 16px;}
+  .order-page{padding:28px 14px;}
   .order-title{font-size:1.7rem;}
+  .pick-grid{grid-template-columns:repeat(2,1fr);}
+  .pick-img{height:110px;}
   .form-input,.form-select,.form-textarea{font-size:16px;padding:13px 14px;}
-  .confirm{padding:56px 20px;}
+  .confirm{padding:48px 16px;}
   .confirm-title{font-size:1.8rem;}
   .login-card{padding:36px 24px;}
 
@@ -273,7 +335,7 @@ tr.low{background:#fff5f0;}
   .admin-title{font-size:1.5rem;margin-bottom:16px;}
   .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;}
   .stat-card{padding:14px;}
-  .stat-num{font-size:1.6rem;}
+  .stat-num{font-size:1.5rem;}
   .admin-card{padding:14px;}
   .search-input{min-width:0;width:100%;flex:none;font-size:16px;}
   .select-filter{flex:1;font-size:16px;}
@@ -293,35 +355,44 @@ tr.low{background:#fff5f0;}
   .rtable .qty-input{width:110px;font-size:16px;}
   .rtable td.stack .qty-input,.rtable td.stack textarea{width:100% !important;font-size:16px;}
 }
-@media(max-width:360px){
-  .products-grid{grid-template-columns:1fr;}
-  .product-img{height:200px;}
-}
 `;
 
+function Stepper({qty,onChange}) {
+  return (
+    <div className="stepper">
+      <button type="button" onClick={()=>onChange(qty-1)}>−</button>
+      <input type="number" inputMode="numeric" min="1" value={qty} onChange={e=>{ if(e.target.value!=="") onChange(e.target.value); }} />
+      <button type="button" onClick={()=>onChange(qty+1)}>+</button>
+    </div>
+  );
+}
+
 export default function App() {
-  const [lang, setLang] = useState("en");
-  const [page, setPage] = useState("home");
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [preselected, setPreselected] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [ingredients, setIngredients] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminTab, setAdminTab] = useState("orders");
-  const [loading, setLoading] = useState(true);
+  const [lang,setLang] = useState("en");
+  const [page,setPage] = useState("home");
+  const [selectedProduct,setSelectedProduct] = useState(null);
+  const [products,setProducts] = useState([]);
+  const [ingredients,setIngredients] = useState([]);
+  const [orders,setOrders] = useState([]);
+  const [delivery,setDelivery] = useState([]);
+  const [cart,setCart] = useState([]);
+  const [lastOrder,setLastOrder] = useState(null);
+  const [isAdmin,setIsAdmin] = useState(false);
+  const [adminTab,setAdminTab] = useState("orders");
+  const [loading,setLoading] = useState(true);
   const T = TR[lang];
 
-  useEffect(()=>{loadProducts();},[]);
+  useEffect(()=>{loadPublic();},[]);
   useEffect(()=>{window.scrollTo(0,0);},[page]);
 
   const run = async (fn) => {
     try { await fn(); } catch(e) { alert("Error: " + (e.message || e)); }
   };
 
-  const loadProducts = async () => {
+  const loadPublic = async () => {
     setLoading(true);
     try { setProducts(await sb("products?order=id")); } catch(e){ console.error(e); }
+    try { setDelivery(await sb("delivery_prices?order=id")); } catch(e){ console.error(e); }
     setLoading(false);
   };
   const loadAdminData = async () => {
@@ -331,28 +402,60 @@ export default function App() {
     } catch(e){ console.error(e); }
   };
 
-  const handleOrder = async (data) => {
+  const changeQty = (id,q) => setCart(prev=>{
+    const n = Math.min(999, Math.max(0, Math.floor(Number(q)) || 0));
+    const exists = prev.some(i=>i.productId===id);
+    if (n===0) return prev.filter(i=>i.productId!==id);
+    if (exists) return prev.map(i=>i.productId===id?{...i,qty:n}:i);
+    return [...prev,{productId:id,qty:n}];
+  });
+
+  const cartLines = cart.map(c=>{
+    const p = products.find(x=>x.id===c.productId);
+    if (!p) return null;
+    const unit = unitPrice(p);
+    return {productId:c.productId,qty:c.qty,product:p,name:p.name,unit,line:unit*c.qty};
+  }).filter(Boolean);
+  const cartCount = cartLines.reduce((s,l)=>s+l.qty,0);
+  const subtotal = cartLines.reduce((s,l)=>s+l.line,0);
+
+  const handleOrder = async (form) => {
     try {
-      const itemsSummary = data.items.map(i=>`${i.productName} x${i.qty}`).join(", ");
-      await sb("orders",{method:"POST",headers:{Prefer:"return=minimal"},body:JSON.stringify({
-        name:data.name, phone:data.phone, wilaya:data.wilaya,
-        address:data.deliveryType==="stopdesk"?data.stopdesk:data.address,
-        commune:data.commune||null, delivery_type:data.deliveryType,
-        product_name:itemsSummary, items:data.items,
-        qty:data.items.reduce((s,i)=>s+i.qty,0), status:"pending"
+      const items = cartLines.map(l=>({productId:l.productId,productName:l.name,qty:l.qty,price:l.unit}));
+      if (items.length===0) return false;
+      const rawFee = getFee(delivery,form.wilaya,form.deliveryType);
+      const fee = rawFee===null?0:rawFee;
+      const total = subtotal+fee;
+      const isStop = form.deliveryType==="stopdesk";
+      const inserted = await sb("orders",{method:"POST",body:JSON.stringify({
+        name:form.name.trim(), phone:form.phone.trim(), wilaya:form.wilaya,
+        address:isStop?form.stopdesk:form.address.trim(),
+        commune:isStop?null:form.commune.trim(),
+        delivery_type:form.deliveryType,
+        product_name:items.map(i=>`${i.productName} x${i.qty}`).join(", "),
+        items, qty:items.reduce((s,i)=>s+i.qty,0),
+        subtotal, delivery_fee:fee, total, status:"pending"
       })});
-      for (const item of data.items) {
+      for (const item of items) {
         const prod = products.find(p=>p.id===item.productId);
         if (prod) {
-          const newStock = Math.max(0,prod.stock-item.qty);
+          const newStock = Math.max(0,(Number(prod.stock)||0)-item.qty);
           await sb(`products?id=eq.${prod.id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify({stock:newStock})});
           setProducts(prev=>prev.map(p=>p.id===prod.id?{...p,stock:newStock}:p));
         }
       }
+      setLastOrder({
+        number: inserted[0] ? inserted[0].order_number : null,
+        items, subtotal, fee, feeKnown:rawFee!==null, total,
+        name:form.name.trim(), wilaya:form.wilaya, deliveryType:form.deliveryType,
+        place: isStop?form.stopdesk:`${form.commune.trim()} - ${form.address.trim()}`
+      });
+      setCart([]);
       setPage("confirm");
+      return true;
     } catch(e){
       console.error(e);
-      alert("Sorry, your order could not be sent. Please try again.");
+      return false;
     }
   };
 
@@ -390,6 +493,10 @@ export default function App() {
     await sb(`ingredients?id=eq.${id}`,{method:"DELETE",headers:{Prefer:"return=minimal"}});
     setIngredients(prev=>prev.filter(i=>i.id!==id));
   });
+  const patchDelivery = (id,patch) => run(async()=>{
+    await sb(`delivery_prices?id=eq.${id}`,{method:"PATCH",headers:{Prefer:"return=minimal"},body:JSON.stringify(patch)});
+    setDelivery(prev=>prev.map(d=>d.id===id?{...d,...patch}:d));
+  });
 
   if (loading) return (
     <>
@@ -401,24 +508,30 @@ export default function App() {
     </>
   );
 
+  const detailLine = selectedProduct ? cart.find(i=>i.productId===selectedProduct.id) : null;
+  const showBar = ["catalog","detail"].includes(page) && cartCount>0;
+
   return (
     <>
       <style>{CSS}</style>
       {page==="admin-login"&&<AdminLogin T={T} onLogin={async()=>{await loadAdminData();setIsAdmin(true);setPage("admin");}} onBack={()=>setPage("home")} />}
       {page==="admin"&&isAdmin&&(
-        <AdminDashboard T={T} tab={adminTab} setTab={setAdminTab} orders={orders} products={products} ingredients={ingredients}
+        <AdminDashboard T={T} tab={adminTab} setTab={setAdminTab} orders={orders} products={products} ingredients={ingredients} delivery={delivery}
           onUpdateOrderStatus={updateOrderStatus} onDeleteOrder={deleteOrder}
           onPatchProduct={patchProduct} onAddProduct={addProduct} onDeleteProduct={deleteProduct}
           onPatchIngredient={patchIngredient} onAddIngredient={addIngredient} onDeleteIngredient={deleteIngredient}
+          onPatchDelivery={patchDelivery}
           onLogout={()=>{setIsAdmin(false);setOrders([]);setPage("home");}} />
       )}
       {!["admin-login","admin"].includes(page)&&(
-        <div className={lang==="ar"?"rtl":"ltr"}>
+        <div className={lang==="ar"?"rtl":"ltr"} style={{paddingBottom:showBar?76:0}}>
           <nav className="nav">
             <div className="nav-logo" onClick={()=>setPage("home")}>MALVERA</div>
             <div className="nav-links">
               {[["home",T.nav_home],["catalog",T.nav_catalog],["order",T.nav_order]].map(([p,l])=>(
-                <button key={p} className={`nav-link ${page===p?"active":""}`} onClick={()=>setPage(p)}>{l}</button>
+                <button key={p} className={`nav-link ${page===p?"active":""}`} onClick={()=>setPage(p)}>
+                  {l}{p==="order"&&cartCount>0&&<span className="cart-badge">{cartCount}</span>}
+                </button>
               ))}
               <button className="lang-btn" onClick={()=>setLang(lang==="en"?"ar":"en")}>{lang==="en"?"عربي":"EN"}</button>
             </div>
@@ -440,8 +553,7 @@ export default function App() {
             </>
           )}
           {page==="catalog"&&(
-            <CatalogPage T={T} lang={lang} products={products}
-              onOrder={p=>{setPreselected(p);setPage("order");}}
+            <CatalogPage T={T} lang={lang} products={products} cart={cart} onChangeQty={changeQty}
               onDetail={p=>{setSelectedProduct(p);setPage("detail");}} />
           )}
           {page==="detail"&&selectedProduct&&(
@@ -456,25 +568,31 @@ export default function App() {
                   <h2 className="detail-title">{selectedProduct.name}</h2>
                   <div className="detail-price"><PriceDisplay price={selectedProduct.price} discount_price={selectedProduct.discount_price} /></div>
                   <p className="detail-desc">{selectedProduct.full_desc}</p>
-                  <button className="btn-primary" onClick={()=>{setPreselected(selectedProduct);setPage("order");}}>{T.order_btn}</button>
+                  <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
+                    {detailLine
+                      ? <Stepper qty={detailLine.qty} onChange={q=>changeQty(selectedProduct.id,q)} />
+                      : <button className="btn-primary" onClick={()=>changeQty(selectedProduct.id,1)}>{T.add_basket}</button>}
+                    {detailLine&&<button className="btn-outline" onClick={()=>setPage("order")}>{T.view_basket}</button>}
+                  </div>
                 </div>
               </div>
             </div>
           )}
           {page==="order"&&(
-            <OrderPage T={T} products={products} preselected={preselected} onSubmit={handleOrder} onBack={()=>setPage("catalog")} />
+            <OrderPage T={T} products={products} cartLines={cartLines} subtotal={subtotal} delivery={delivery}
+              onChangeQty={changeQty} onSubmit={handleOrder} onBack={()=>setPage("catalog")} />
           )}
           {page==="confirm"&&(
-            <div className="confirm">
-              <div className="confirm-icon">✨</div>
-              <h2 className="confirm-title">{T.conf_title}</h2>
-              <p className="confirm-msg">{T.conf_msg}</p>
-              <button className="btn-primary" onClick={()=>{setPage("home");setPreselected(null);}}>{T.conf_back}</button>
-            </div>
+            <ConfirmPage T={T} order={lastOrder} onBack={()=>setPage("home")} />
           )}
           <footer style={{background:"var(--mocha)",color:"rgba(255,255,255,0.5)",textAlign:"center",padding:"28px 24px",fontSize:"0.75rem",letterSpacing:"1px",marginTop:60}}>
             <div style={{fontFamily:"Cormorant Garamond",fontSize:"1.1rem",color:"var(--gold2)",letterSpacing:"4px",marginBottom:8}}>MALVERA</div>
             <div>Natural Cosmetics · Handcrafted with Love</div>
+            <div style={{marginTop:10,lineHeight:1.9}}>
+              <a href={`tel:${CONTACT_PHONE}`} style={{color:"inherit"}} dir="ltr">{CONTACT_PHONE}</a>
+              {" · "}
+              <a href={`https://instagram.com/${CONTACT_INSTAGRAM}`} target="_blank" rel="noreferrer" style={{color:"inherit"}}>@{CONTACT_INSTAGRAM}</a>
+            </div>
             <div onClick={()=>{
               if(!window._tap) window._tap={count:0,timer:null};
               window._tap.count++;
@@ -483,13 +601,19 @@ export default function App() {
               if(window._tap.count>=3){window._tap.count=0;setPage("admin-login");}
             }} style={{marginTop:8,height:32,cursor:"default",userSelect:"none",WebkitTapHighlightColor:"transparent"}} />
           </footer>
+          {showBar&&(
+            <button className="cart-bar" onClick={()=>setPage("order")}>
+              <span>🛒 {cartCount} · {money(subtotal)}</span>
+              <span>{T.view_basket}</span>
+            </button>
+          )}
         </div>
       )}
     </>
   );
 }
 
-function CatalogPage({T,lang,products,onOrder,onDetail}) {
+function CatalogPage({T,lang,products,cart,onChangeQty,onDetail}) {
   const [activeFilter,setActiveFilter] = useState("all");
   const filters = [{key:"all",label:T.f_all},{key:"face",label:T.f_face},{key:"lip",label:T.f_lip},{key:"body",label:T.f_body},{key:"hair",label:T.f_hair}];
   const filtered = activeFilter==="all"?products:products.filter(p=>p.category?.includes(activeFilter));
@@ -501,60 +625,103 @@ function CatalogPage({T,lang,products,onOrder,onDetail}) {
         {filters.map(f=><button key={f.key} className={`filter-btn ${activeFilter===f.key?"active":""}`} onClick={()=>setActiveFilter(f.key)}>{f.label}</button>)}
       </div>
       <div className="products-grid">
-        {filtered.map(p=>(
-          <div key={p.id} className="product-card" onClick={()=>onDetail(p)}>
-            <div className="product-img">
-              {p.image_url?<img src={p.image_url} alt={p.name} />:<span>🌿</span>}
-            </div>
-            <div className="product-info">
-              <div className="product-cat">{p.category?.split(",").map(c=>CAT_LABELS[c.trim()]?.[lang]).filter(Boolean).join(" · ")}</div>
-              <div className="product-name">{p.name}</div>
-              <div className="product-short">{p.short_desc}</div>
-              <div className="product-price"><PriceDisplay price={p.price} discount_price={p.discount_price} /></div>
-              <div className="product-actions" onClick={e=>e.stopPropagation()}>
-                <button className="btn-primary" style={{padding:"8px 16px",fontSize:"0.72rem"}} onClick={()=>onOrder(p)}>{T.order_btn}</button>
-                <button className="btn-outline" style={{padding:"8px 14px",fontSize:"0.72rem"}} onClick={()=>onDetail(p)}>{T.details_btn}</button>
+        {filtered.map(p=>{
+          const inCart = cart.find(i=>i.productId===p.id);
+          return (
+            <div key={p.id} className="product-card" onClick={()=>onDetail(p)}>
+              <div className="product-img">
+                {p.image_url?<img src={p.image_url} alt={p.name} />:<span>🌿</span>}
+              </div>
+              <div className="product-info">
+                <div className="product-cat">{p.category?.split(",").map(c=>CAT_LABELS[c.trim()]?.[lang]).filter(Boolean).join(" · ")}</div>
+                <div className="product-name">{p.name}</div>
+                <div className="product-short">{p.short_desc}</div>
+                <div className="product-price"><PriceDisplay price={p.price} discount_price={p.discount_price} /></div>
+                <div className="product-actions" onClick={e=>e.stopPropagation()}>
+                  {inCart
+                    ? <Stepper qty={inCart.qty} onChange={q=>onChangeQty(p.id,q)} />
+                    : <button className="btn-primary" style={{padding:"10px 16px",fontSize:"0.72rem"}} onClick={()=>onChangeQty(p.id,1)}>{T.add_basket}</button>}
+                  <button className="btn-outline" style={{padding:"10px 14px",fontSize:"0.72rem"}} onClick={()=>onDetail(p)}>{T.details_btn}</button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function OrderPage({T,products,preselected,onSubmit,onBack}) {
+function OrderPage({T,products,cartLines,subtotal,delivery,onChangeQty,onSubmit,onBack}) {
   const [form,setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home"});
-  const [cart,setCart] = useState(preselected?[{productId:preselected.id,productName:preselected.name,qty:1}]:[]);
   const [sending,setSending] = useState(false);
+  const [err,setErr] = useState("");
   const set = (k,v)=>setForm(f=>({...f,[k]:v}));
   const isStopdesk = form.deliveryType==="stopdesk";
-  const availableStopdesks = form.wilaya&&ANDERSON_STOPDESKS[form.wilaya]?ANDERSON_STOPDESKS[form.wilaya]:[];
-  const selectedStopdesk = availableStopdesks.find(s=>s.name===form.stopdesk);
-  const addToCart = (productId)=>{
-    const prod = products.find(p=>p.id===Number(productId));
-    if (!prod||cart.find(i=>i.productId===prod.id)) return;
-    setCart(prev=>[...prev,{productId:prod.id,productName:prod.name,qty:1}]);
-  };
-  const updateCartQty = (productId,qty)=>setCart(prev=>prev.map(i=>i.productId===productId?{...i,qty:Math.max(1,Number(qty)||1)}:i));
-  const removeFromCart = (productId)=>setCart(prev=>prev.filter(i=>i.productId!==productId));
+  const stopdesks = form.wilaya&&ANDERSON_STOPDESKS[form.wilaya]?ANDERSON_STOPDESKS[form.wilaya]:[];
+  const selectedStopdesk = stopdesks.find(s=>s.name===form.stopdesk);
+  const fee = form.wilaya?getFee(delivery,form.wilaya,form.deliveryType):null;
+  const total = subtotal+(fee||0);
+
   const handle = async ()=>{
     if (sending) return;
-    if (!form.name||!form.phone||!form.wilaya||cart.length===0) return;
-    if (isStopdesk&&!form.stopdesk) return;
-    if (!isStopdesk&&!form.address) return;
+    setErr("");
+    if (cartLines.length===0) { setErr(T.err_basket); return; }
+    if (!form.name.trim()||!form.phone.trim()||!form.wilaya) { setErr(T.err_fill); return; }
+    if (isStopdesk ? !form.stopdesk : (!form.commune.trim()||!form.address.trim())) { setErr(T.err_fill); return; }
+    if (!/^(\+213|0)[567]\d{8}$/.test(form.phone.replace(/[\s.\-]/g,""))) { setErr(T.err_phone); return; }
     setSending(true);
-    await onSubmit({...form,items:cart});
+    const ok = await onSubmit(form);
     setSending(false);
+    if (ok===false) setErr(T.err_send);
   };
+
   const deliveryBtn = (key,label)=>(
     <button type="button" onClick={()=>{set("deliveryType",key);set("wilaya","");set("stopdesk","");}} style={{flex:1,padding:"12px 6px",border:`2px solid ${form.deliveryType===key?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType===key?"var(--mocha)":"var(--white)",color:form.deliveryType===key?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>{label}</button>
   );
+
   return (
     <div className="order-page">
       <button className="back-btn" onClick={onBack}>{T.back}</button>
       <h2 className="order-title">{T.order_title}</h2>
-      <div className="section-line" style={{marginBottom:32}} />
+      <div className="section-line" style={{marginBottom:8}} />
+
+      <h3 className="step-title">1. {T.choose_products}</h3>
+      <div className="pick-grid">
+        {products.map(p=>{
+          const line = cartLines.find(l=>l.productId===p.id);
+          return (
+            <div key={p.id} className={`pick-card ${line?"selected":""}`}>
+              <div className="pick-img">{p.image_url?<img src={p.image_url} alt={p.name} />:<span>🌿</span>}</div>
+              <div className="pick-name">{p.name}</div>
+              <div className="pick-price"><PriceDisplay price={p.price} discount_price={p.discount_price} /></div>
+              {line
+                ? <Stepper qty={line.qty} onChange={q=>onChangeQty(p.id,q)} />
+                : <button type="button" className="btn-primary pick-add" onClick={()=>onChangeQty(p.id,1)}>+ {T.add_basket}</button>}
+            </div>
+          );
+        })}
+      </div>
+
+      <h3 className="step-title">2. {T.your_basket}</h3>
+      {cartLines.length===0 ? <p className="muted">{T.basket_empty}</p> : (
+        <div className="basket">
+          {cartLines.map(l=>(
+            <div className="basket-row" key={l.productId}>
+              <div className="basket-thumb">{l.product.image_url?<img src={l.product.image_url} alt="" />:<span>🌿</span>}</div>
+              <div className="basket-info">
+                <div className="basket-name">{l.name}</div>
+                <div className="basket-unit">{money(l.unit)} × {l.qty}</div>
+              </div>
+              <div className="basket-line">{money(l.line)}</div>
+              <button type="button" className="basket-x" onClick={()=>onChangeQty(l.productId,0)}>✕</button>
+            </div>
+          ))}
+          <div className="basket-sub"><span>{T.subtotal}</span><strong>{money(subtotal)}</strong></div>
+        </div>
+      )}
+
+      <h3 className="step-title">3. {T.your_details}</h3>
       {[["name",T.f_name,"text"],["phone",T.f_phone,"tel"]].map(([k,l,type])=>(
         <div className="form-group" key={k}>
           <label className="form-label">{l} *</label>
@@ -572,7 +739,10 @@ function OrderPage({T,products,preselected,onSubmit,onBack}) {
         <label className="form-label">{T.f_wilaya} *</label>
         <select className="form-select" value={form.wilaya} onChange={e=>{set("wilaya",e.target.value);set("stopdesk","");}}>
           <option value="">{T.sel_wilaya}</option>
-          {(isStopdesk?STOPDESK_WILAYAS:WILAYAS).map(w=><option key={w} value={w}>{w}</option>)}
+          {(isStopdesk?STOPDESK_WILAYAS:WILAYAS).map(w=>{
+            const f = getFee(delivery,w,form.deliveryType);
+            return <option key={w} value={w}>{w}{f!==null?` — ${money(f)}`:""}</option>;
+          })}
         </select>
       </div>
       {isStopdesk&&form.wilaya&&(
@@ -580,7 +750,7 @@ function OrderPage({T,products,preselected,onSubmit,onBack}) {
           <label className="form-label">{T.f_stopdesk} *</label>
           <select className="form-select" value={form.stopdesk} onChange={e=>set("stopdesk",e.target.value)}>
             <option value="">{T.sel_stopdesk}</option>
-            {availableStopdesks.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+            {stopdesks.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
           </select>
           {selectedStopdesk?.maps&&(<a href={selectedStopdesk.maps} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:8,fontSize:"0.78rem",color:"var(--gold)",letterSpacing:"1px"}}>📍 {T.view_map}</a>)}
         </div>
@@ -597,31 +767,56 @@ function OrderPage({T,products,preselected,onSubmit,onBack}) {
           </div>
         </>
       )}
-      <div className="form-group">
-        <label className="form-label">Products *</label>
-        <select className="form-select" value="" onChange={e=>{addToCart(e.target.value);}}>
-          <option value="">+ Add a product</option>
-          {products.filter(p=>!cart.find(i=>i.productId===p.id)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+
+      <div className="totals">
+        <div><span>{T.subtotal}</span><span>{money(subtotal)}</span></div>
+        <div><span>{T.delivery_fee}</span><span>{!form.wilaya?T.select_wilaya_fee:fee===null?T.fee_tbc:money(fee)}</span></div>
+        <div className="grand"><span>{T.total}</span><span>{money(total)}</span></div>
       </div>
-      {cart.length>0&&(
-        <div className="form-group">
-          <label className="form-label">Your Cart</label>
-          <div style={{border:"1px solid var(--beige2)",borderRadius:2,overflow:"hidden"}}>
-            {cart.map((item,idx)=>(
-              <div key={item.productId} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",borderBottom:idx<cart.length-1?"1px solid var(--beige2)":"none",background:"var(--white)"}}>
-                <span style={{flex:1,fontSize:"0.9rem",color:"var(--text)"}}>{item.productName}</span>
-                <input type="number" min="1" value={item.qty} onChange={e=>updateCartQty(item.productId,e.target.value)} style={{width:64,padding:"8px",border:"1px solid var(--beige2)",borderRadius:2,fontFamily:"Jost",fontSize:"16px",textAlign:"center"}} />
-                <button onClick={()=>removeFromCart(item.productId)} style={{background:"none",border:"none",cursor:"pointer",color:"var(--muted)",fontSize:"1.1rem",padding:"6px"}}>✕</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      <button className="btn-primary" style={{width:"100%",padding:15,opacity:sending?0.6:1}} onClick={handle} disabled={sending}>{sending?"...":T.submit}</button>
+
+      {err&&<div className="form-error">{err}</div>}
+      <button className="btn-primary" style={{width:"100%",padding:16,opacity:sending?0.6:1}} onClick={handle} disabled={sending}>{sending?"...":T.submit}</button>
     </div>
   );
 }
+
+function ConfirmPage({T,order,onBack}) {
+  if (!order) return null;
+  return (
+    <div className="confirm">
+      <div className="confirm-icon">✨</div>
+      <h2 className="confirm-title">{T.conf_title}</h2>
+      <div className="order-no">{T.order_number}<strong dir="ltr">#{order.number!==null&&order.number!==undefined?order.number:"—"}</strong></div>
+      <p className="muted" style={{marginTop:-10,marginBottom:20}}>{T.keep_number}</p>
+      <div className="receipt">
+        <div className="receipt-title">{T.your_order}</div>
+        {order.items.map((i,idx)=>(
+          <div className="receipt-row" key={idx}><span>{i.productName} × {i.qty}</span><span>{money(i.price*i.qty)}</span></div>
+        ))}
+        <div className="receipt-row"><span>{T.subtotal}</span><span>{money(order.subtotal)}</span></div>
+        <div className="receipt-row"><span>{T.delivery_fee}</span><span>{order.feeKnown?money(order.fee):T.fee_tbc}</span></div>
+        <div className="receipt-row grand"><span>{T.total}</span><span>{money(order.total)}</span></div>
+        <div className="receipt-meta">
+          <div>{order.name}</div>
+          <div>{T.delivery_to}: {order.deliveryType==="stopdesk"?T.del_stop:T.del_home} — {order.wilaya}</div>
+          <div>{order.place}</div>
+        </div>
+      </div>
+      <p className="confirm-msg">{T.conf_msg}</p>
+      <div className="contact-box">
+        <div style={{marginBottom:6}}>{T.contact_us}</div>
+        <div>📞 {T.lbl_phone}: <a href={`tel:${CONTACT_PHONE}`} dir="ltr">{CONTACT_PHONE}</a></div>
+        <div>📸 {T.lbl_instagram}: <a href={`https://instagram.com/${CONTACT_INSTAGRAM}`} target="_blank" rel="noreferrer" dir="ltr">@{CONTACT_INSTAGRAM}</a></div>
+        <div>✉️ {T.lbl_email}: <a href={`mailto:${CONTACT_EMAIL}`} dir="ltr">{CONTACT_EMAIL}</a></div>
+      </div>
+      <button className="btn-primary" onClick={onBack}>{T.conf_back}</button>
+    </div>
+  );
+}
+const STATUS_LIST = ["pending","confirmed","delivered","cancelled","returned"];
+const STATUS_BG = {pending:"#fffdf3",confirmed:"#f0f7ff",delivered:"#f0fff4",cancelled:"#fff5f5",returned:"#f7f2fc"};
+const STATUS_SEL = {pending:["#fef3cd","#856404"],confirmed:["#d1edff","#0a5a8a"],delivered:["#d4edda","#155724"],cancelled:["#fde8e8","#c0392b"],returned:["#ece3f7","#6b3fa0"]};
+
 function AdminLogin({T,onLogin,onBack}) {
   const [email,setEmail] = useState("");
   const [pass,setPass] = useState("");
@@ -655,10 +850,16 @@ function AdminLogin({T,onLogin,onBack}) {
   );
 }
 
-function AdminDashboard({T,tab,setTab,orders,products,ingredients,onUpdateOrderStatus,onDeleteOrder,onPatchProduct,onAddProduct,onDeleteProduct,onPatchIngredient,onAddIngredient,onDeleteIngredient,onLogout}) {
+function AdminDashboard({T,tab,setTab,orders,products,ingredients,delivery,onUpdateOrderStatus,onDeleteOrder,onPatchProduct,onAddProduct,onDeleteProduct,onPatchIngredient,onAddIngredient,onDeleteIngredient,onPatchDelivery,onLogout}) {
   const lowP = products.filter(p=>p.stock<=p.threshold).length;
   const lowI = ingredients.filter(i=>i.threshold>0&&i.qty<=i.threshold).length;
-  const tabs = [{key:"orders",label:T.adm_orders,icon:"📋"},{key:"products",label:T.adm_products,icon:"📦"},{key:"ingredients",label:T.adm_ing,icon:"🧪"}];
+  const sales = orders.filter(o=>o.status==="delivered").reduce((s,o)=>s+(Number(o.total)||0),0);
+  const tabs = [
+    {key:"orders",label:T.adm_orders,icon:"📋"},
+    {key:"products",label:T.adm_products,icon:"📦"},
+    {key:"ingredients",label:T.adm_ing,icon:"🧪"},
+    {key:"delivery",label:T.adm_delivery,icon:"🚚"}
+  ];
   return (
     <div className="admin-layout">
       <aside className="admin-sidebar">
@@ -675,12 +876,14 @@ function AdminDashboard({T,tab,setTab,orders,products,ingredients,onUpdateOrderS
         <div className="stat-grid">
           <div className="stat-card"><div className="stat-num">{orders.length}</div><div className="stat-label">Total Orders</div></div>
           <div className="stat-card"><div className="stat-num" style={{color:"var(--orange)"}}>{orders.filter(o=>o.status==="pending").length}</div><div className="stat-label">Pending</div></div>
+          <div className="stat-card"><div className="stat-num" style={{color:"#155724",fontSize:"1.4rem"}}>{money(sales)}</div><div className="stat-label">{T.sales}</div></div>
           <div className="stat-card"><div className="stat-num" style={{color:"var(--red)"}}>{lowP}</div><div className="stat-label">Low Products</div></div>
           <div className="stat-card"><div className="stat-num" style={{color:"var(--red)"}}>{lowI}</div><div className="stat-label">Low Ingredients</div></div>
         </div>
         {tab==="orders"&&<OrdersTab T={T} orders={orders} onUpdateStatus={onUpdateOrderStatus} onDeleteOrder={onDeleteOrder} />}
         {tab==="products"&&<ProductsTab T={T} products={products} onPatch={onPatchProduct} onAdd={onAddProduct} onDelete={onDeleteProduct} />}
         {tab==="ingredients"&&<IngredientsTab T={T} ingredients={ingredients} onPatch={onPatchIngredient} onAdd={onAddIngredient} onDelete={onDeleteIngredient} />}
+        {tab==="delivery"&&<DeliveryTab T={T} delivery={delivery} onPatch={onPatchDelivery} />}
       </main>
     </div>
   );
@@ -690,13 +893,12 @@ function OrdersTab({T,orders,onUpdateStatus,onDeleteOrder}) {
   const [search,setSearch] = useState("");
   const [filterStatus,setFilterStatus] = useState("all");
   const [filterWilaya,setFilterWilaya] = useState("all");
-  const bg = {pending:"#fffdf3",confirmed:"#f0f7ff",delivered:"#f0fff4"};
-  const sel = {pending:["#fef3cd","#856404"],confirmed:["#d1edff","#0a5a8a"],delivered:["#d4edda","#155724"]};
+  const label = {pending:T.s_pending,confirmed:T.s_confirmed,delivered:T.s_delivered,cancelled:T.s_cancelled,returned:T.s_returned};
   const q = search.toLowerCase();
   const filtered = orders.filter(o=>
     (filterStatus==="all"||o.status===filterStatus)&&
     (filterWilaya==="all"||o.wilaya===filterWilaya)&&
-    ((o.name||"").toLowerCase().includes(q)||(o.product_name||"").toLowerCase().includes(q))
+    ((o.name||"").toLowerCase().includes(q)||(o.product_name||"").toLowerCase().includes(q)||String(o.order_number||"").includes(q)||(o.phone||"").includes(q))
   );
   const wilayas = [...new Set(orders.map(o=>o.wilaya).filter(Boolean))];
   return (
@@ -705,9 +907,7 @@ function OrdersTab({T,orders,onUpdateStatus,onDeleteOrder}) {
         <input className="search-input" placeholder={T.search} value={search} onChange={e=>setSearch(e.target.value)} />
         <select className="select-filter" value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
           <option value="all">All Statuses</option>
-          <option value="pending">{T.s_pending}</option>
-          <option value="confirmed">{T.s_confirmed}</option>
-          <option value="delivered">{T.s_delivered}</option>
+          {STATUS_LIST.map(s=><option key={s} value={s}>{label[s]}</option>)}
         </select>
         <select className="select-filter" value={filterWilaya} onChange={e=>setFilterWilaya(e.target.value)}>
           <option value="all">All Wilayas</option>
@@ -717,25 +917,26 @@ function OrdersTab({T,orders,onUpdateStatus,onDeleteOrder}) {
       {filtered.length===0?<p style={{color:"var(--muted)",padding:"20px 0"}}>{T.no_orders}</p>:(
         <div style={{overflowX:"auto"}}>
           <table className="rtable">
-            <thead><tr><th>{T.c_name}</th><th>{T.c_product}</th><th>{T.c_qty}</th><th>{T.c_wilaya}</th><th>Delivery</th><th>{T.c_phone}</th><th>{T.c_date}</th><th>{T.c_status}</th></tr></thead>
+            <thead><tr><th>{T.c_order}</th><th>{T.c_name}</th><th>{T.c_product}</th><th>{T.c_total}</th><th>{T.c_wilaya}</th><th>Delivery</th><th>{T.c_phone}</th><th>{T.c_date}</th><th>{T.c_status}</th></tr></thead>
             <tbody>
               {filtered.map(o=>{
-                const colors = sel[o.status]||sel.pending;
+                const colors = STATUS_SEL[o.status]||STATUS_SEL.pending;
                 return (
-                  <tr key={o.id} style={{background:bg[o.status]||"white"}}>
+                  <tr key={o.id} style={{background:STATUS_BG[o.status]||"white"}}>
+                    <td data-label={T.c_order}><strong dir="ltr">{o.order_number?`#${o.order_number}`:"—"}</strong></td>
                     <td data-label={T.c_name}><div><strong>{o.name}</strong><br/><span style={{fontSize:"0.75rem",color:"var(--muted)"}}>{o.commune?`${o.commune} - `:""}{o.address}</span></div></td>
                     <td data-label={T.c_product}><div>{o.items&&o.items.length>0?o.items.map((item,i)=><div key={i} style={{fontSize:"0.82rem"}}>{item.productName} <b>x{item.qty}</b></div>):o.product_name}</div></td>
-                    <td data-label={T.c_qty}>{o.qty}</td>
+                    <td data-label={T.c_total}>
+                      {o.total?(<div style={{textAlign:"inherit"}}><strong>{money(o.total)}</strong><br/><span style={{fontSize:"0.7rem",color:"var(--muted)"}}>{money(o.subtotal)} + {money(o.delivery_fee)}</span></div>):"—"}
+                    </td>
                     <td data-label={T.c_wilaya}>{o.wilaya}</td>
                     <td data-label="Delivery"><span className={`badge ${o.delivery_type==="stopdesk"?"badge-confirmed":"badge-pending"}`}>{o.delivery_type==="stopdesk"?"Stop Desk":"Home"}</span></td>
-                    <td data-label={T.c_phone}><a href={`tel:${o.phone}`} style={{color:"inherit"}}>{o.phone}</a></td>
+                    <td data-label={T.c_phone}><a href={`tel:${o.phone}`} style={{color:"inherit"}} dir="ltr">{o.phone}</a></td>
                     <td data-label={T.c_date} style={{fontSize:"0.8rem",color:"var(--muted)"}}>{new Date(o.created_at).toLocaleString()}</td>
                     <td data-label={T.c_status}>
                       <div style={{display:"flex",gap:6,alignItems:"center"}}>
                         <select className="status-select" value={o.status} onChange={e=>onUpdateStatus(o.id,e.target.value)} style={{background:colors[0],color:colors[1],fontWeight:500,padding:"8px"}}>
-                          <option value="pending">{T.s_pending}</option>
-                          <option value="confirmed">{T.s_confirmed}</option>
-                          <option value="delivered">{T.s_delivered}</option>
+                          {STATUS_LIST.map(s=><option key={s} value={s}>{label[s]}</option>)}
                         </select>
                         <button onClick={()=>{if(window.confirm("Delete this order?")) onDeleteOrder(o.id);}} className="btn-danger" style={{padding:"8px 12px"}}>🗑️</button>
                       </div>
@@ -966,6 +1167,49 @@ function IngredientsTab({T,ingredients,onPatch,onAdd,onDelete}) {
                 })}
               </Fragment>
             ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function DeliveryTab({T,delivery,onPatch}) {
+  const [edits,setEdits] = useState({});
+  const [search,setSearch] = useState("");
+  const setEdit = (id,field,val)=>setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
+  const save = async (d)=>{
+    const ed = edits[d.id];
+    if (!ed) return;
+    const patch = {};
+    if (ed.home!==undefined) patch.home = Number(ed.home)||0;
+    if (ed.stopdesk!==undefined) patch.stopdesk = Number(ed.stopdesk)||0;
+    await onPatch(d.id,patch);
+    setEdits(e=>{const n={...e};delete n[d.id];return n;});
+  };
+  const filtered = delivery.filter(d=>(d.wilaya||"").toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div className="admin-card">
+      <p className="muted" style={{marginBottom:14}}>Change a price, then press Save. Customers see the new price immediately.</p>
+      <div className="search-bar">
+        <input className="search-input" placeholder={T.search} value={search} onChange={e=>setSearch(e.target.value)} />
+      </div>
+      <div style={{overflowX:"auto"}}>
+        <table className="rtable">
+          <thead><tr><th>{T.c_wilaya}</th><th>{T.home_price}</th><th>{T.stop_price}</th><th></th></tr></thead>
+          <tbody>
+            {filtered.map(d=>{
+              const ed = edits[d.id]||{};
+              const dirty = Object.keys(ed).length>0;
+              return (
+                <tr key={d.id}>
+                  <td data-label={T.c_wilaya}><strong style={{fontWeight:500}}>{d.wilaya}</strong></td>
+                  <td data-label={T.home_price}><input className="qty-input" type="number" min="0" value={ed.home??d.home} onChange={e=>setEdit(d.id,"home",e.target.value)} /></td>
+                  <td data-label={T.stop_price}><input className="qty-input" type="number" min="0" value={ed.stopdesk??d.stopdesk} onChange={e=>setEdit(d.id,"stopdesk",e.target.value)} /></td>
+                  <td className="center"><button className="btn-save" style={{padding:"9px 18px",opacity:dirty?1:0.5}} onClick={()=>save(d)}>{T.save}</button></td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
