@@ -652,7 +652,7 @@ function CatalogPage({T,lang,products,cart,onChangeQty,onDetail}) {
   );
 }
 
-function OrderPage({T,products,cartLines,subtotal,delivery,onChangeQty,onSubmit,onBack}) {
+function OrderPageOld({T,products,cartLines,subtotal,delivery,onChangeQty,onSubmit,onBack}) {
   const [form,setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home"});
   const [sending,setSending] = useState(false);
   const [err,setErr] = useState("");
@@ -1213,6 +1213,147 @@ function DeliveryTab({T,delivery,onPatch}) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function OrderPage({T,products,cartLines,subtotal,delivery,onChangeQty,onSubmit,onBack}) {
+  const ar = T.nav_home==="الرئيسية";
+  const L = ar
+    ? {explore:"استكشفي المزيد من المنتجات",hide:"إخفاء المنتجات",more:"أضيفي منتجات أخرى",none:"لا توجد منتجات أخرى."}
+    : {explore:"Explore more products",hide:"Hide products",more:"Add more products",none:"No other products available."};
+  const [form,setForm] = useState({name:"",phone:"",wilaya:"",commune:"",address:"",stopdesk:"",deliveryType:"home"});
+  const [showMore,setShowMore] = useState(cartLines.length===0);
+  const [sending,setSending] = useState(false);
+  const [err,setErr] = useState("");
+  const set = (k,v)=>setForm(f=>({...f,[k]:v}));
+  const isStopdesk = form.deliveryType==="stopdesk";
+  const stopdesks = form.wilaya&&ANDERSON_STOPDESKS[form.wilaya]?ANDERSON_STOPDESKS[form.wilaya]:[];
+  const selectedStopdesk = stopdesks.find(s=>s.name===form.stopdesk);
+  const fee = form.wilaya?getFee(delivery,form.wilaya,form.deliveryType):null;
+  const total = subtotal+(fee||0);
+  const available = products.filter(p=>!cartLines.find(l=>l.productId===p.id));
+
+  const handle = async ()=>{
+    if (sending) return;
+    setErr("");
+    if (cartLines.length===0) { setErr(T.err_basket); return; }
+    if (!form.name.trim()||!form.phone.trim()||!form.wilaya) { setErr(T.err_fill); return; }
+    if (isStopdesk ? !form.stopdesk : (!form.commune.trim()||!form.address.trim())) { setErr(T.err_fill); return; }
+    if (!/^(\+213|0)[567]\d{8}$/.test(form.phone.replace(/[\s.\-]/g,""))) { setErr(T.err_phone); return; }
+    setSending(true);
+    const ok = await onSubmit(form);
+    setSending(false);
+    if (ok===false) setErr(T.err_send);
+  };
+
+  const deliveryBtn = (key,label)=>(
+    <button type="button" onClick={()=>{set("deliveryType",key);set("wilaya","");set("stopdesk","");}} style={{flex:1,padding:"12px 6px",border:`2px solid ${form.deliveryType===key?"var(--mocha)":"var(--beige2)"}`,borderRadius:2,background:form.deliveryType===key?"var(--mocha)":"var(--white)",color:form.deliveryType===key?"var(--cream)":"var(--text)",cursor:"pointer",fontFamily:"Jost",fontSize:"0.85rem",transition:"all 0.2s"}}>{label}</button>
+  );
+
+  return (
+    <div className="order-page">
+      <button className="back-btn" onClick={onBack}>{T.back}</button>
+      <h2 className="order-title">{T.order_title}</h2>
+      <div className="section-line" style={{marginBottom:8}} />
+
+      <h3 className="step-title">1. {T.your_basket}</h3>
+      {cartLines.length===0 ? <p className="muted">{T.basket_empty}</p> : (
+        <div className="basket">
+          {cartLines.map(l=>(
+            <div className="basket-row" key={l.productId} style={{flexWrap:"wrap"}}>
+              <div className="basket-thumb" style={{width:64,height:64}}>{l.product.image_url?<img src={l.product.image_url} alt="" />:<span>🌿</span>}</div>
+              <div className="basket-info">
+                <div className="basket-name">{l.name}</div>
+                <div className="basket-unit">{money(l.unit)}</div>
+              </div>
+              <button type="button" className="basket-x" onClick={()=>onChangeQty(l.productId,0)}>✕</button>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",gap:10}}>
+                <Stepper qty={l.qty} onChange={q=>onChangeQty(l.productId,q)} />
+                <div className="basket-line">{money(l.line)}</div>
+              </div>
+            </div>
+          ))}
+          <div className="basket-sub"><span>{T.subtotal}</span><strong>{money(subtotal)}</strong></div>
+        </div>
+      )}
+
+      <button type="button" className="btn-outline" style={{width:"100%",marginTop:12,padding:14}} onClick={()=>setShowMore(s=>!s)}>
+        {showMore ? L.hide : (cartLines.length===0 ? T.choose_products : L.explore)} {showMore?"▲":"▼"}
+      </button>
+
+      {showMore&&(
+        <div style={{marginTop:14}}>
+          {available.length===0 ? <p className="muted">{L.none}</p> : (
+            <div className="pick-grid">
+              {available.map(p=>(
+                <div key={p.id} className="pick-card">
+                  <div className="pick-img">{p.image_url?<img src={p.image_url} alt={p.name} />:<span>🌿</span>}</div>
+                  <div className="pick-name">{p.name}</div>
+                  <div className="pick-price"><PriceDisplay price={p.price} discount_price={p.discount_price} /></div>
+                  <button type="button" className="btn-primary pick-add" onClick={()=>onChangeQty(p.id,1)}>+ {T.add_basket}</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <h3 className="step-title">2. {T.your_details}</h3>
+      {[["name",T.f_name,"text"],["phone",T.f_phone,"tel"]].map(([k,l,type])=>(
+        <div className="form-group" key={k}>
+          <label className="form-label">{l} *</label>
+          <input className="form-input" type={type} value={form[k]} onChange={e=>set(k,e.target.value)} />
+        </div>
+      ))}
+      <div className="form-group">
+        <label className="form-label">{T.del_type} *</label>
+        <div style={{display:"flex",gap:12}}>
+          {deliveryBtn("home","🏠 "+T.del_home)}
+          {deliveryBtn("stopdesk","🏢 "+T.del_stop)}
+        </div>
+      </div>
+      <div className="form-group">
+        <label className="form-label">{T.f_wilaya} *</label>
+        <select className="form-select" value={form.wilaya} onChange={e=>{set("wilaya",e.target.value);set("stopdesk","");}}>
+          <option value="">{T.sel_wilaya}</option>
+          {(isStopdesk?STOPDESK_WILAYAS:WILAYAS).map(w=>{
+            const f = getFee(delivery,w,form.deliveryType);
+            return <option key={w} value={w}>{w}{f!==null?` — ${money(f)}`:""}</option>;
+          })}
+        </select>
+      </div>
+      {isStopdesk&&form.wilaya&&(
+        <div className="form-group">
+          <label className="form-label">{T.f_stopdesk} *</label>
+          <select className="form-select" value={form.stopdesk} onChange={e=>set("stopdesk",e.target.value)}>
+            <option value="">{T.sel_stopdesk}</option>
+            {stopdesks.map(s=><option key={s.name} value={s.name}>{s.name}</option>)}
+          </select>
+          {selectedStopdesk?.maps&&(<a href={selectedStopdesk.maps} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:8,fontSize:"0.78rem",color:"var(--gold)",letterSpacing:"1px"}}>📍 {T.view_map}</a>)}
+        </div>
+      )}
+      {!isStopdesk&&(
+        <>
+          <div className="form-group">
+            <label className="form-label">{T.f_commune} *</label>
+            <input className="form-input" value={form.commune} onChange={e=>set("commune",e.target.value)} placeholder={T.sel_commune} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">{T.f_addr} *</label>
+            <input className="form-input" value={form.address} onChange={e=>set("address",e.target.value)} />
+          </div>
+        </>
+      )}
+
+      <div className="totals">
+        <div><span>{T.subtotal}</span><span>{money(subtotal)}</span></div>
+        <div><span>{T.delivery_fee}</span><span>{!form.wilaya?T.select_wilaya_fee:fee===null?T.fee_tbc:money(fee)}</span></div>
+        <div className="grand"><span>{T.total}</span><span>{money(total)}</span></div>
+      </div>
+
+      {err&&<div className="form-error">{err}</div>}
+      <button className="btn-primary" style={{width:"100%",padding:16,opacity:sending?0.6:1}} onClick={handle} disabled={sending}>{sending?"...":T.submit}</button>
     </div>
   );
 }
