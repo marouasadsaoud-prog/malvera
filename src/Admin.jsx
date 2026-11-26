@@ -503,7 +503,7 @@ function ReviewsTab({ reviews, setReviews, run }) {
     setEd((x) => { const m = { ...x }; delete m[r.id]; return m; });
   });
   const del = (r) => { if (window.confirm("Delete this review?")) run(async () => { await sb(`reviews?id=eq.${r.id}`, { method: "DELETE", headers: { Prefer: "return=minimal" } }); setReviews((a) => a.filter((x) => x.id !== r.id)); }); };
-  const Form = ({ v, onChange, k }) => (
+  const form = (v, onChange, k) => (
     <>
       <div className="ed-4">
         <Field label="Customer name"><input className="form-input" value={v.name || ""} onChange={(e) => onChange(k, "name", e.target.value)} /></Field>
@@ -521,13 +521,13 @@ function ReviewsTab({ reviews, setReviews, run }) {
     <>
       <div className="admin-card">
         <h3>Add a review</h3>
-        <Form v={n} onChange={(k, f, val) => setN((x) => ({ ...x, [f]: val }))} />
+        {form(n, (k, f, val) => setN((x) => ({ ...x, [f]: val })))}
         <button className="btn-add" onClick={add}>+ Add review</button>
         <p className="muted">If there are no visible reviews, the reviews section disappears from the home page.</p>
       </div>
       {reviews.map((r) => (
         <div className="admin-card" key={r.id}>
-          <Form v={{ ...r, ...(ed[r.id] || {}) }} onChange={(id, f, val) => put(id, f, val)} k={r.id} />
+          {form({ ...r, ...(ed[r.id] || {}) }, (id, f, val) => put(id, f, val), r.id)}
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <Stars n={Number((ed[r.id] || {}).stars ?? r.stars)} s={16} />
             <button className="btn-save" style={{ marginInlineStart: "auto", opacity: ed[r.id] ? 1 : 0.5 }} onClick={() => save(r)}>Save</button>
