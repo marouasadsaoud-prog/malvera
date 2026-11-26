@@ -1,616 +1,750 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, Fragment } from "react";
 import {
-  sb, toNum, unitPrice, getFee, WILAYAS, ANDERSON_STOPDESKS, STOPDESK_WILAYAS, money, waLink,
-  imgsOf, isSold, canBuy, pText, pDet, DETAIL_FIELDS, Rich, Ico, Stars, Stepper, DEFAULTS, TR, CSS,
+  sb, sbAuth, signOut, uploadPhoto, toNum, money, waLink, normPhone, STATUS_LIST, STATUS_BG, STATUS_SEL,
+  imgsOf, DETAIL_FIELDS, TEXT_GROUPS, DEFAULTS, ING_CATEGORIES, Ico, Stars,
 } from "./lib.jsx";
-import Admin from "./Admin.jsx";
 
-const FALLBACK_COLLECTIONS = [
-  { id: 1, slug: "face", name_en: "Face", name_ar: "الوجه" },
-  { id: 2, slug: "lip", name_en: "Lip Care", name_ar: "العناية بالشفاه" },
-  { id: 3, slug: "body", name_en: "Body", name_ar: "الجسم" },
-  { id: 4, slug: "hair", name_en: "Hair", name_ar: "الشعر" },
-];
+const NOSTOCK = ["cancelled", "returned"];
+const patchOpts = (body) => ({ method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify(body) });
+const slugify = (s) => String(s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-const priceOf = (p) => (
-  p.discount_price && toNum(p.discount_price)
-    ? <span><s style={{ color: "var(--muted)", fontSize: "0.85em", marginInlineEnd: 8 }}>{money(toNum(p.price))}</s><span style={{ color: "var(--red)", fontWeight: 600 }}>{money(toNum(p.discount_price))}</span></span>
-    : <span>{money(toNum(p.price))}</span>
-);
-
-function Leaves() {
-  const d = <><path d="M20 560C60 400 120 260 250 90" /><path d="M70 440c-30-10-50-35-55-60 30 0 52 20 55 60z" /><path d="M95 360c30-5 55-25 62-55-32 2-58 22-62 55z" /><path d="M130 285c-28-12-42-38-44-62 28 4 46 26 44 62z" /><path d="M170 220c30-3 52-22 60-50-30 0-54 18-60 50z" /><path d="M215 150c-24-14-34-38-34-60 26 6 40 28 34 60z" /></>;
-  return (
-    <>
-      <svg className="hero-leaf" style={{ left: -30, top: 0 }} width="360" height="560" viewBox="0 0 360 560" fill="none" stroke="#7d8f69" strokeWidth="1.4" aria-hidden="true">{d}</svg>
-      <svg className="hero-leaf" style={{ right: -30, bottom: 0, transform: "scaleX(-1)" }} width="360" height="560" viewBox="0 0 360 560" fill="none" stroke="#a08a5a" strokeWidth="1.4" aria-hidden="true">{d}</svg>
-    </>
-  );
-}
-
-function Avail({ p, T }) {
-  const sold = isSold(p);
-  if (sold && p.preorder) return <div className="avail pre"><i />{T.preorder}</div>;
-  if (sold) return <div className="avail out"><i />{T.out_stock}</div>;
-  if (Number(p.stock) <= Number(p.threshold || 0)) return <div className="avail pre"><i />{T.few_left}</div>;
-  return <div className="avail"><i />{T.in_stock}</div>;
-}
-
-function ProductCard({ p, c }) {
-  const { T, lang, cart, changeQty } = c;
-  const imgs = imgsOf(p);
-  const sold = isSold(p);
-  const pre = sold && p.preorder;
-  const inCart = cart.find((i) => i.productId === p.id);
-  const pc = toNum(p.price), dc = toNum(p.discount_price);
-  const off = !sold && dc && pc && dc < pc ? Math.round(100 - (dc / pc) * 100) : 0;
-  return (
-    <div className="pcard" onClick={() => c.openProduct(p)}>
-      <div className={`pimg ${sold && !pre ? "soldimg" : ""}`}>
-        {imgs[0] ? <img src={imgs[0]} alt={pText(p, "name", lang)} loading="lazy" /> : <Ico n="leaf" s={44} />}
-        {sold && !pre && <span className="tag red">{T.sold_out}</span>}
-        {pre && <span className="tag">{T.preorder}</span>}
-        {off > 0 && <span className="tag gold">-{off}%</span>}
-      </div>
-      <div className="pinfo">
-        <div className="pcat">{c.catLabel(p)}</div>
-        <div className="pname">{pText(p, "name", lang)}</div>
-        <div className="pshort">{pText(p, "short_desc", lang)}</div>
-        <div className="pprice">{priceOf(p)}</div>
-        <Avail p={p} T={T} />
-        <div className="pact" onClick={(e) => e.stopPropagation()}>
-          {sold && !pre ? <button className="btn-outline" disabled style={{ opacity: 0.5, cursor: "not-allowed" }}>{T.sold_out}</button>
-            : inCart ? <Stepper qty={inCart.qty} onChange={(q) => changeQty(p.id, q)} />
-            : <button className={pre ? "btn-outline" : "btn-primary"} onClick={() => changeQty(p.id, 1)}>{pre ? T.preorder_btn : T.add_basket}</button>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StopLocator({ c }) {
-  const { T, tx } = c;
-  const [w, setW] = useState("");
-  const [s, setS] = useState("");
-  const list = w ? ANDERSON_STOPDESKS[w] || [] : [];
-  const sel = list.find((x) => x.name === s);
-  return (
-    <div className="stopcard">
-      <div className="form-group" style={{ marginBottom: 12 }}>
-        <label className="form-label">{T.stop_sel_w}</label>
-        <select className="form-select" value={w} onChange={(e) => { setW(e.target.value); setS(""); }}>
-          <option value="">{T.sel_wilaya}</option>
-          {STOPDESK_WILAYAS.map((x) => <option key={x} value={x}>{x}</option>)}
-        </select>
-      </div>
-      {w && (
-        <div className="form-group" style={{ marginBottom: 0 }}>
-          <label className="form-label">{T.stop_sel_s}</label>
-          <select className="form-select" value={s} onChange={(e) => setS(e.target.value)}>
-            <option value="">{T.sel_stopdesk}</option>
-            {list.map((x) => <option key={x.name} value={x.name}>{x.name}</option>)}
-          </select>
-        </div>
-      )}
-      {sel && sel.maps && <a className="mapbtn" href={sel.maps} target="_blank" rel="noreferrer"><Ico n="pin" s={22} />{T.stop_map_btn}</a>}
-      {sel && !sel.maps && <p className="muted" style={{ marginTop: 12 }}>{T.stop_nomap}</p>}
-      {!sel && <p className="muted" style={{ marginTop: 12 }}>{T.stop_pick}</p>}
-    </div>
-  );
-}
-
-function Home({ c }) {
-  const { T, tx, lang, shown, collections, reviews } = c;
-  const trust = [["leaf", "t1"], ["drop", "t2"], ["truck", "t3"], ["check", "t4"]];
-  const cols = collections.filter((k) => shown.some((p) => (p.category || "").split(",").map((x) => x.trim()).includes(k.slug)));
-  const heroBg = c.texts.hero_bg && c.texts.hero_bg.en;
-  const storyImg = c.texts.story_img && c.texts.story_img.en;
-  return (
-    <>
-      <section className="hero">
-        {heroBg && <div className="hero-bg" style={{ backgroundImage: `url(${heroBg})` }} />}
-        <Leaves />
-        <div className="hero-in">
-          <div className="eyebrow">{tx("hero_tag")}</div>
-          <h1 className="hero-title brand">MALVERA</h1>
-          <div className="hero-tagline ital">{tx("hero_tagline")}</div>
-          <p className="hero-desc">{tx("hero_desc")}</p>
-          <div className="hero-btns">
-            <button className="btn-primary" onClick={() => c.openShop("all")}>{tx("hero_btn1")}</button>
-            <button className="btn-outline" onClick={() => c.goSection("story")}>{tx("hero_btn2")}</button>
-          </div>
-        </div>
-      </section>
-      <div className="trust"><div className="trust-in">
-        {trust.map(([ic, k]) => (
-          <div className="trust-i" key={k}><Ico n={ic} s={32} /><div><b>{tx(k)}</b><small>{tx(k + "s")}</small></div></div>
-        ))}
-      </div></div>
-
-      {cols.length > 0 && (
-        <section className="wrap section">
-          <div className="eyebrow">{tx("cats_eyebrow")}</div>
-          <h2 className="h2">{tx("cats_title")}</h2>
-          <div className="cats">
-            {cols.map((k) => {
-              const first = shown.find((p) => (p.category || "").split(",").map((x) => x.trim()).includes(k.slug) && imgsOf(p)[0]);
-              return (
-                <button key={k.id} className="cat-card" onClick={() => c.openShop(k.slug)}>
-                  <div className="cat-img">{first && <img src={imgsOf(first)[0]} alt="" loading="lazy" />}</div>
-                  <div className="cat-foot"><b>{(lang === "ar" && k.name_ar) || k.name_en}</b><span>{T.explore} →</span></div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {shown.length > 0 && (
-        <section className="wrap section">
-          <div className="head-row">
-            <div><div className="eyebrow">{tx("coll_eyebrow")}</div><h2 className="h2">{tx("coll_title")}</h2></div>
-            <button className="link-u" onClick={() => c.openShop("all")}>{T.view_all}</button>
-          </div>
-          <div className="pgrid">{shown.slice(0, 4).map((p) => <ProductCard key={p.id} p={p} c={c} />)}</div>
-        </section>
-      )}
-
-      <section className="wrap section" id="story">
-        <div className="split">
-          <div><div className="story-img">{storyImg && <img src={storyImg} alt="" loading="lazy" />}</div></div>
-          <div>
-            <div className="eyebrow">{tx("story_eyebrow")}</div>
-            <h2 className="h2">{tx("story_title")}</h2>
-            <p className="story-p">{tx("story_text")}</p>
-            <div className="ticks">
-              {["story_b1", "story_b2", "story_b3"].map((k) => <div key={k}><span className="tick"><Ico n="check" s={15} /></span><span>{tx(k)}</span></div>)}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="wrap section">
-        <div className="center"><div className="eyebrow">{tx("steps_eyebrow")}</div><h2 className="h2">{tx("steps_title")}</h2></div>
-        <div className="steps">
-          {[1, 2, 3].map((n) => <div className="step" key={n}><div className="step-n">{n}</div><h3>{tx(`step${n}_t`)}</h3><p>{tx(`step${n}_d`)}</p></div>)}
-        </div>
-      </section>
-
-      {reviews.length > 0 && (
-        <section className="wrap section">
-          <div className="center"><div className="eyebrow">{tx("reviews_eyebrow")}</div><h2 className="h2">{tx("reviews_title")}</h2></div>
-          <div className="revs">
-            {reviews.slice(0, 9).map((r) => (
-              <div className="rev" key={r.id}>
-                <Stars n={r.stars || 5} />
-                <q>“{(lang === "ar" ? r.text_ar || r.text_en : r.text_en || r.text_ar) || ""}”</q>
-                <b>{r.name}</b>{r.city && <small>{r.city}</small>}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="wrap section">
-        <div className="stopblock">
-          <div style={{ flex: "1 1 340px", minWidth: 0 }}>
-            <div className="eyebrow">{tx("stop_eyebrow")}</div>
-            <h2>{tx("stop_title")}</h2>
-            <p>{tx("stop_desc")}</p>
-          </div>
-          <StopLocator c={c} />
-        </div>
-      </section>
-    </>
-  );
-}
-
-function ShopPage({ c }) {
-  const { T, lang, shown, collections } = c;
-  const f = c.filter;
-  const list = f === "all" ? shown : shown.filter((p) => (p.category || "").split(",").map((x) => x.trim()).includes(f));
-  return (
-    <div className="wrap page-top">
-      <div className="eyebrow">{T.nav_shop}</div>
-      <h2 className="h2">{T.cat_title}</h2>
-      <div className="filters">
-        <button className={`filter-btn ${f === "all" ? "active" : ""}`} onClick={() => c.setFilter("all")}>{T.f_all}</button>
-        {collections.map((k) => <button key={k.id} className={`filter-btn ${f === k.slug ? "active" : ""}`} onClick={() => c.setFilter(k.slug)}>{(lang === "ar" && k.name_ar) || k.name_en}</button>)}
-      </div>
-      {list.length === 0 ? <p className="muted" style={{ marginTop: 30 }}>{T.no_products}</p> : <div className="pgrid">{list.map((p) => <ProductCard key={p.id} p={p} c={c} />)}</div>}
-    </div>
-  );
-}
-
-function DetailPage({ c, p }) {
-  const { T, lang, tx, cart, changeQty } = c;
-  const imgs = imgsOf(p);
-  const [i, setI] = useState(0);
-  const touch = useRef(null);
-  useEffect(() => { setI(0); }, [p.id]);
-  const n = imgs.length;
-  const go = (d) => setI((x) => (x + d + n) % n);
-  const sold = isSold(p), pre = sold && p.preorder;
-  const line = cart.find((x) => x.productId === p.id);
-  const fields = DETAIL_FIELDS.map(([k, en, ar]) => [k, lang === "ar" ? ar : en, pDet(p, k, lang)]).filter((x) => x[2] && x[2].trim());
-  const note = pDet(p, "availability", lang);
-  const others = c.shown.filter((x) => x.id !== p.id).slice(0, 4);
-  return (
-    <div className="wrap page-top">
-      <button className="back-btn" onClick={() => c.openShop(c.filter)}>{T.back_shop}</button>
-      <div className="dgrid">
-        <div>
-          <div className="gal-main"
-            onTouchStart={(e) => { touch.current = e.touches[0].clientX; }}
-            onTouchEnd={(e) => { if (touch.current === null || n < 2) return; const dx = e.changedTouches[0].clientX - touch.current; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); touch.current = null; }}>
-            {n > 0 ? <img src={imgs[i]} alt={pText(p, "name", lang)} style={sold && !pre ? { opacity: 0.6 } : null} /> : <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}><Ico n="leaf" s={64} /></div>}
-            {sold && !pre && <span className="tag red">{T.sold_out}</span>}
-            {pre && <span className="tag">{T.preorder}</span>}
-            {n > 1 && <>
-              <button className="gal-arrow l" onClick={() => go(-1)} aria-label="previous"><Ico n="left" s={20} /></button>
-              <button className="gal-arrow r" onClick={() => go(1)} aria-label="next"><Ico n="right" s={20} /></button>
-              <div className="gal-dots">{imgs.map((_, k) => <i key={k} className={k === i ? "on" : ""} />)}</div>
-            </>}
-          </div>
-          {n > 1 && <div className="thumbs">{imgs.map((u, k) => <button key={k} className={`thumb ${k === i ? "on" : ""}`} onClick={() => setI(k)}><img src={u} alt="" /></button>)}</div>}
-        </div>
-        <div>
-          <div className="pcat">{c.catLabel(p)}</div>
-          <h1 className="d-title">{pText(p, "name", lang)}</h1>
-          <div className="d-price">{priceOf(p)}</div>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
-            <Avail p={p} T={T} />{note && <span className="muted">· {note}</span>}
-          </div>
-          {pText(p, "short_desc", lang) && <p className="d-desc"><Rich text={pText(p, "short_desc", lang)} /></p>}
-          <div className="d-buy">
-            {sold && !pre ? <button className="btn-outline" disabled style={{ opacity: 0.5, flex: "1 1 200px" }}>{T.sold_out}</button>
-              : line ? <><Stepper qty={line.qty} onChange={(q) => changeQty(p.id, q)} /><button className="btn-primary" onClick={() => c.go("order")}>{T.view_basket}</button></>
-              : <><Stepper qty={c.detailQty} onChange={(q) => c.setDetailQty(Math.max(1, Math.floor(Number(q)) || 1))} /><button className="btn-primary" onClick={() => changeQty(p.id, c.detailQty)}>{pre ? T.preorder_btn : T.add_basket}</button></>}
-          </div>
-          {pre && <div className="d-note">{tx("preorder_note")}</div>}
-          {pText(p, "full_desc", lang) && <div className="d-desc"><Rich text={pText(p, "full_desc", lang)} /></div>}
-          {fields.length > 0 && (
-            <div className="accs">
-              {fields.map(([k, title, body], idx) => (
-                <details className="acc" key={k + p.id} open={idx === 0}>
-                  <summary>{title}<Ico n="down" s={18} /></summary>
-                  <div className="acc-b"><Rich text={body} /></div>
-                </details>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-      {others.length > 0 && (
-        <div className="section">
-          <h2 className="h2">{T.more_like}</h2>
-          <div className="pgrid">{others.map((x) => <ProductCard key={x.id} p={x} c={c} />)}</div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function OrderPage({ c }) {
-  const { T, lang, tx, shown, cartLines, subtotal, delivery, changeQty } = c;
-  const [form, setForm] = useState({ name: "", phone: "", wilaya: "", commune: "", address: "", stopdesk: "", deliveryType: "home" });
-  const [showMore, setShowMore] = useState(cartLines.length === 0);
-  const [sending, setSending] = useState(false);
-  const [err, setErr] = useState("");
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-  const isStop = form.deliveryType === "stopdesk";
-  const stops = form.wilaya && ANDERSON_STOPDESKS[form.wilaya] ? ANDERSON_STOPDESKS[form.wilaya] : [];
-  const sel = stops.find((s) => s.name === form.stopdesk);
-  const fee = form.wilaya ? getFee(delivery, form.wilaya, form.deliveryType) : null;
-  const total = subtotal + (fee || 0);
-  const available = shown.filter((p) => canBuy(p) && !cartLines.find((l) => l.productId === p.id));
-  const hasPre = cartLines.some((l) => l.pre);
-
-  const handle = async () => {
-    if (sending) return;
-    setErr("");
-    if (cartLines.length === 0) { setErr(T.err_basket); return; }
-    if (!form.name.trim() || !form.phone.trim() || !form.wilaya) { setErr(T.err_fill); return; }
-    if (isStop ? !form.stopdesk : (!form.commune.trim() || !form.address.trim())) { setErr(T.err_fill); return; }
-    if (!/^(\+213|0)[567]\d{8}$/.test(form.phone.replace(/[\s.\-]/g, ""))) { setErr(T.err_phone); return; }
-    setSending(true);
-    const r = await c.submitOrder(form, sel);
-    setSending(false);
-    if (r !== true) setErr(r);
-  };
-  const dbtn = (key, ic, label) => (
-    <button type="button" className={`dbtn ${form.deliveryType === key ? "on" : ""}`} onClick={() => { set("deliveryType", key); set("wilaya", ""); set("stopdesk", ""); }}><Ico n={ic} s={20} />{label}</button>
-  );
-  return (
-    <div className="order-page">
-      <button className="back-btn" onClick={() => c.openShop("all")}>{T.back_shop}</button>
-      <h2 className="order-title">{T.order_title}</h2>
-
-      <h3 className="step-title">1. {T.your_basket}</h3>
-      {cartLines.length === 0 ? <p className="muted">{T.basket_empty}</p> : (
-        <div className="basket">
-          {cartLines.map((l) => (
-            <div className="basket-row" key={l.productId}>
-              <div className="basket-thumb">{imgsOf(l.product)[0] && <img src={imgsOf(l.product)[0]} alt="" />}</div>
-              <div className="basket-info">
-                <div className="basket-name">{l.name}{l.pre && <span className="pre-pill">{T.pre_tag}</span>}</div>
-                <div className="basket-unit">{money(l.unit)}</div>
-              </div>
-              <button type="button" className="basket-x" onClick={() => changeQty(l.productId, 0)}>✕</button>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: 10 }}>
-                <Stepper qty={l.qty} onChange={(q) => changeQty(l.productId, q)} />
-                <div className="basket-line">{money(l.line)}</div>
-              </div>
-            </div>
-          ))}
-          <div className="basket-sub"><span>{T.subtotal}</span><strong>{money(subtotal)}</strong></div>
-        </div>
-      )}
-      {hasPre && <div className="d-note">{tx("preorder_note")}</div>}
-      <button type="button" className="btn-outline" style={{ width: "100%", marginTop: 12 }} onClick={() => setShowMore((s) => !s)}>
-        {showMore ? T.hide_more : cartLines.length === 0 ? T.choose_products : T.explore_more} {showMore ? "▲" : "▼"}
-      </button>
-      {showMore && (
-        <div style={{ marginTop: 14 }}>
-          {available.length === 0 ? <p className="muted">{T.no_other}</p> : (
-            <div className="pick-grid">
-              {available.map((p) => (
-                <div key={p.id} className="pick-card">
-                  <div className="pick-img">{imgsOf(p)[0] && <img src={imgsOf(p)[0]} alt="" />}</div>
-                  <div className="pick-name">{pText(p, "name", lang)}</div>
-                  <div className="pick-price">{priceOf(p)}</div>
-                  <button type="button" className="btn-primary pick-add" onClick={() => changeQty(p.id, 1)}>+ {isSold(p) ? T.preorder_btn : T.add_basket}</button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      <h3 className="step-title">2. {T.your_details}</h3>
-      {[["name", T.f_name, "text"], ["phone", T.f_phone, "tel"]].map(([k, l, type]) => (
-        <div className="form-group" key={k}>
-          <label className="form-label">{l} *</label>
-          <input className="form-input" type={type} dir={k === "phone" ? "ltr" : undefined} value={form[k]} onChange={(e) => set(k, e.target.value)} />
-        </div>
-      ))}
-      <div className="form-group">
-        <label className="form-label">{T.del_type} *</label>
-        <div className="dtype">{dbtn("home", "home", T.del_home)}{dbtn("stopdesk", "building", T.del_stop)}</div>
-      </div>
-      <div className="form-group">
-        <label className="form-label">{T.f_wilaya} *</label>
-        <select className="form-select" value={form.wilaya} onChange={(e) => { set("wilaya", e.target.value); set("stopdesk", ""); }}>
-          <option value="">{T.sel_wilaya}</option>
-          {(isStop ? STOPDESK_WILAYAS : WILAYAS).map((w) => { const f = getFee(delivery, w, form.deliveryType); return <option key={w} value={w}>{w}{f !== null ? ` — ${money(f)}` : ""}</option>; })}
-        </select>
-      </div>
-      {isStop && form.wilaya && (
-        <div className="form-group">
-          <label className="form-label">{T.f_stopdesk} *</label>
-          <select className="form-select" value={form.stopdesk} onChange={(e) => set("stopdesk", e.target.value)}>
-            <option value="">{T.sel_stopdesk}</option>
-            {stops.map((s) => <option key={s.name} value={s.name}>{s.name}</option>)}
-          </select>
-          <div className="stopbox" style={{ marginTop: 12 }}>
-            {sel && sel.maps && <a className="mapbtn" style={{ marginTop: 0 }} href={sel.maps} target="_blank" rel="noreferrer"><Ico n="pin" s={22} />{T.stop_map_btn}</a>}
-            {sel && !sel.maps && <p className="muted">{T.stop_nomap}</p>}
-            {!sel && <p className="muted">{T.stop_pick}</p>}
-          </div>
-        </div>
-      )}
-      {!isStop && (
-        <>
-          <div className="form-group"><label className="form-label">{T.f_commune} *</label><input className="form-input" value={form.commune} onChange={(e) => set("commune", e.target.value)} placeholder={T.sel_commune} /></div>
-          <div className="form-group"><label className="form-label">{T.f_addr} *</label><input className="form-input" value={form.address} onChange={(e) => set("address", e.target.value)} /></div>
-        </>
-      )}
-      <div className="totals">
-        <div><span>{T.subtotal}</span><span>{money(subtotal)}</span></div>
-        <div><span>{T.delivery_fee}</span><span>{!form.wilaya ? T.select_wilaya_fee : fee === null ? T.fee_tbc : money(fee)}</span></div>
-        <div className="grand"><span>{T.total}</span><span>{money(total)}</span></div>
-      </div>
-      {err && <div className="form-error">{err}</div>}
-      <button className="btn-primary" style={{ width: "100%", padding: 17 }} onClick={handle} disabled={sending}>{sending ? "..." : T.submit}</button>
-    </div>
-  );
-}
-
-function ConfirmPage({ c }) {
-  const { T, tx, lastOrder: o } = c;
-  if (!o) return null;
-  const wa = c.ct("c_whatsapp"), ig = c.ct("c_instagram"), tt = c.ct("c_tiktok"), em = c.ct("c_email");
-  return (
-    <div className="confirm">
-      <h2 className="confirm-title">{T.conf_title}</h2>
-      <div className="order-no">{T.order_number}<strong dir="ltr">#{o.number ?? "—"}</strong></div>
-      <p className="muted" style={{ marginBottom: 20 }}>{T.keep_number}</p>
-      <div className="receipt">
-        <div className="receipt-title">{T.your_order}</div>
-        {o.items.map((i, k) => <div className="receipt-row" key={k}><span>{i.productName} × {i.qty}{i.preorder && <span className="pre-pill">{T.pre_tag}</span>}</span><span>{money(i.price * i.qty)}</span></div>)}
-        <div className="receipt-row"><span>{T.subtotal}</span><span>{money(o.subtotal)}</span></div>
-        <div className="receipt-row"><span>{T.delivery_fee}</span><span>{money(o.fee)}</span></div>
-        <div className="receipt-row grand"><span>{T.total}</span><span>{money(o.total)}</span></div>
-        <div className="receipt-meta">
-          <div>{o.name}</div>
-          <div>{T.delivery_to}: {o.deliveryType === "stopdesk" ? T.del_stop : T.del_home} — {o.wilaya}</div>
-          <div>{o.place}</div>
-        </div>
-        {o.deliveryType === "stopdesk" && o.map && <a className="mapbtn" href={o.map} target="_blank" rel="noreferrer"><Ico n="pin" s={22} />{T.stop_map_btn}</a>}
-      </div>
-      {o.pre && <div className="d-note" style={{ marginBottom: 18, textAlign: "start" }}>{tx("preorder_note")}</div>}
-      <p className="muted" style={{ marginBottom: 20, lineHeight: 1.8, fontSize: "1rem" }}>{T.conf_msg}</p>
-      <div className="contact-box">
-        <div style={{ marginBottom: 6 }}>{T.contact_us}</div>
-        <a href={waLink(wa)} target="_blank" rel="noreferrer"><Ico n="wa" s={20} /><span dir="ltr">WhatsApp: {wa}</span></a>
-        <a href={`https://instagram.com/${ig}`} target="_blank" rel="noreferrer"><Ico n="ig" s={20} /><span dir="ltr">@{ig}</span></a>
-        <a href={`https://www.tiktok.com/@${tt}`} target="_blank" rel="noreferrer"><Ico n="tt" s={20} /><span dir="ltr">@{tt}</span></a>
-        <a href={`mailto:${em}`}><Ico n="mail" s={20} /><span dir="ltr">{em}</span></a>
-      </div>
-      <button className="btn-primary" onClick={() => c.go("home")}>{T.conf_back}</button>
-    </div>
-  );
-}
-
-function Footer({ c }) {
-  const { T, tx, lang, collections } = c;
-  const wa = c.ct("c_whatsapp"), ig = c.ct("c_instagram"), tt = c.ct("c_tiktok");
-  const tap = useRef({ n: 0, t: null });
-  return (
-    <footer className="footer" id="contact">
-      <div className="foot-in">
-        <div style={{ flex: "1 1 280px", minWidth: 0 }}>
-          <div className="foot-logo brand">MALVERA</div>
-          <p style={{ marginTop: 14, fontSize: "0.95rem", lineHeight: 1.7, color: "#d3c4ad", fontWeight: 300, maxWidth: 340 }}>{tx("footer_desc")}</p>
-        </div>
-        <div style={{ flex: "0 1 200px", minWidth: 0 }}>
-          <div className="foot-h">{T.nav_shop}</div>
-          <div className="foot-l">{collections.map((k) => <button key={k.id} onClick={() => c.openShop(k.slug)}>{(lang === "ar" && k.name_ar) || k.name_en}</button>)}</div>
-        </div>
-        <div style={{ flex: "0 1 280px", minWidth: 0 }}>
-          <div className="foot-h">{T.nav_contact}</div>
-          <div className="foot-l">
-            <a href={waLink(wa)} target="_blank" rel="noreferrer"><Ico n="wa" s={20} /><span dir="ltr">WhatsApp · {wa}</span></a>
-            <a href={`https://instagram.com/${ig}`} target="_blank" rel="noreferrer"><Ico n="ig" s={20} /><span dir="ltr">@{ig}</span></a>
-            <a href={`https://www.tiktok.com/@${tt}`} target="_blank" rel="noreferrer"><Ico n="tt" s={20} /><span dir="ltr">@{tt}</span></a>
-          </div>
-        </div>
-      </div>
-      <div className="foot-b">© Malvera
-        <span onClick={() => {
-          const t = tap.current; t.n++; clearTimeout(t.t); t.t = setTimeout(() => { t.n = 0; }, 1000);
-          if (t.n >= 3) { t.n = 0; c.go("admin"); }
-        }} style={{ display: "inline-block", width: 70, height: 28, verticalAlign: "middle", cursor: "default", userSelect: "none", WebkitTapHighlightColor: "transparent" }} />
-      </div>
-    </footer>
-  );
-}
-
-export default function App() {
-  const [lang, setLang] = useState("en");
-  const [page, setPage] = useState("home");
-  const [selId, setSelId] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [products, setProducts] = useState([]);
-  const [collections, setCollections] = useState([]);
-  const [texts, setTexts] = useState({});
+export default function Admin({ T, shared, onExit }) {
+  const { products, setProducts, collections, setCollections, texts, setTexts, delivery, setDelivery } = shared;
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [tab, setTab] = useState("dashboard");
+  const [orders, setOrders] = useState([]);
+  const [ingredients, setIngredients] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [delivery, setDelivery] = useState([]);
-  const [cart, setCart] = useState([]);
-  const [detailQty, setDetailQty] = useState(1);
-  const [lastOrder, setLastOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const T = TR[lang];
 
-  const loadPublic = async () => {
-    const get = async (path, set) => { try { set(await sb(path)); } catch (e) { console.error(e); } };
-    await Promise.all([
-      get("products?order=id", setProducts),
-      get("delivery_prices?order=id", setDelivery),
-      get("collections?order=sort,id", setCollections),
-      get("reviews?visible=eq.true&order=id.desc", setReviews),
-      sb("site_texts").then((rows) => { const m = {}; rows.forEach((r) => { m[r.key] = { en: r.en, ar: r.ar }; }); setTexts(m); }).catch(() => {}),
-    ]);
-    setLoading(false);
-  };
-  useEffect(() => { loadPublic(); }, []);
-  useEffect(() => { window.scrollTo(0, 0); }, [page, selId]);
-  useEffect(() => { document.documentElement.lang = lang; document.documentElement.dir = lang === "ar" ? "rtl" : "ltr"; }, [lang]);
-
-  const tx = (k) => { const v = texts[k] && texts[k][lang]; return v && String(v).trim() ? v : (DEFAULTS[k] ? DEFAULTS[k][lang] : ""); };
-  const ct = (k) => { const v = texts[k] && texts[k].en; return v && String(v).trim() ? v : DEFAULTS[k].en; };
-  const colls = collections.length ? collections : FALLBACK_COLLECTIONS;
-  const shown = products.filter((p) => p.active !== false);
-  const catLabel = (p) => (p.category || "").split(",").map((s) => colls.find((k) => k.slug === s.trim())).filter(Boolean).map((k) => (lang === "ar" && k.name_ar) || k.name_en).join(" · ");
-
-  const changeQty = (id, q) => setCart((prev) => {
-    const p = products.find((x) => x.id === id);
-    let n = Math.min(999, Math.max(0, Math.floor(Number(q)) || 0));
-    if (p && n > 0) { if (!canBuy(p)) return prev; if (!p.preorder) n = Math.min(n, Math.max(1, Number(p.stock) || 0)); }
-    if (n === 0) return prev.filter((i) => i.productId !== id);
-    return prev.some((i) => i.productId === id) ? prev.map((i) => (i.productId === id ? { ...i, qty: n } : i)) : [...prev, { productId: id, qty: n }];
-  });
-  const cartLines = cart.map((x) => {
-    const p = products.find((y) => y.id === x.productId);
-    if (!p) return null;
-    const unit = unitPrice(p);
-    return { productId: x.productId, qty: x.qty, product: p, name: pText(p, "name", lang), unit, line: unit * x.qty, pre: x.qty > Number(p.stock || 0) };
-  }).filter(Boolean);
-  const cartCount = cartLines.reduce((s, l) => s + l.qty, 0);
-  const subtotal = cartLines.reduce((s, l) => s + l.line, 0);
-
-  const submitOrder = async (form, stop) => {
-    try {
-      const isStop = form.deliveryType === "stopdesk";
-      const r = await sb("rpc/place_order", { method: "POST", body: JSON.stringify({
-        p_name: form.name.trim(), p_phone: form.phone.trim(), p_wilaya: form.wilaya, p_delivery_type: form.deliveryType,
-        p_commune: isStop ? "" : form.commune.trim(), p_address: isStop ? form.stopdesk : form.address.trim(),
-        p_items: cartLines.map((l) => ({ productId: l.productId, qty: l.qty })),
-      }) });
-      setLastOrder({
-        number: r.order_number, items: r.items, subtotal: r.subtotal, fee: r.delivery_fee, total: r.total, pre: !!r.is_preorder,
-        name: form.name.trim(), wilaya: form.wilaya, deliveryType: form.deliveryType, map: stop && stop.maps,
-        place: isStop ? form.stopdesk : `${form.commune.trim()} - ${form.address.trim()}`,
-      });
-      setCart([]); setPage("confirm");
-      sb("products?order=id").then(setProducts).catch(() => {});
-      return true;
-    } catch (e) {
-      console.error(e);
-      return /out of stock|not available|inactive/i.test(String((e && e.message) || "")) ? T.err_stock : T.err_send;
+  const run = async (fn) => {
+    try { await fn(); return true; } catch (e) {
+      const m = String((e && e.message) || e);
+      if (/JWT|permission denied|row-level security|PGRST30/i.test(m)) alert("Your admin session has expired. Please log out and log in again.");
+      else alert("Error: " + m);
+      return false;
     }
   };
-
-  const go = (p) => setPage(p);
-  const goSection = (id) => {
-    const scroll = () => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth" }); };
-    if (page !== "home") { setPage("home"); setTimeout(scroll, 120); } else scroll();
+  const loadAdminData = async () => {
+    const get = async (path, set) => { try { set(await sb(path)); } catch (e) { console.error(e); } };
+    await Promise.all([get("ingredients?order=id", setIngredients), get("orders?order=created_at.desc", setOrders), get("reviews?order=id.desc", setReviews)]);
   };
-  const openShop = (f) => { setFilter(f || "all"); setPage("shop"); };
-  const openProduct = (p) => { setSelId(p.id); setDetailQty(1); setPage("detail"); };
-  const c = { T, lang, tx, ct, texts, shown, collections: colls, reviews, cart, cartLines, subtotal, delivery, filter, setFilter, changeQty, detailQty, setDetailQty,
-    catLabel, go, goSection, openShop, openProduct, submitOrder, lastOrder };
 
-  if (loading) return (
-    <>
-      <style>{CSS}</style>
-      <div className="loader"><div className="brand" style={{ fontFamily: "Cormorant Garamond", fontSize: "2.5rem", color: "var(--mocha)", letterSpacing: "6px" }}>MALVERA</div></div>
-    </>
+  const updateOrderStatus = (o, status) => run(async () => {
+    await sb(`orders?id=eq.${o.id}`, patchOpts({ status }));
+    setOrders((prev) => prev.map((x) => (x.id === o.id ? { ...x, status } : x)));
+    const was = NOSTOCK.includes(o.status), now = NOSTOCK.includes(status);
+    if (was === now || !Array.isArray(o.items)) return;
+    const sign = !was && now ? 1 : -1;
+    if (!window.confirm(sign === 1 ? "Put the items of this order back in stock?" : "Take the items of this order out of stock again?")) return;
+    for (const it of o.items) {
+      if (it.preorder) continue;
+      const p = products.find((x) => x.id === it.productId);
+      if (!p) continue;
+      const stock = Math.max(0, (Number(p.stock) || 0) + sign * Number(it.qty));
+      await sb(`products?id=eq.${p.id}`, patchOpts({ stock }));
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, stock } : x)));
+    }
+  });
+  const deleteOrder = (id) => run(async () => { await sb(`orders?id=eq.${id}`, { method: "DELETE", headers: { Prefer: "return=minimal" } }); setOrders((p) => p.filter((o) => o.id !== id)); });
+  const patchProduct = (id, patch) => run(async () => { await sb(`products?id=eq.${id}`, patchOpts(patch)); setProducts((p) => p.map((x) => (x.id === id ? { ...x, ...patch } : x))); });
+  const addProduct = (data) => run(async () => {
+    const id = Math.max(0, ...products.map((p) => p.id)) + 1;
+    const ins = await sb("products", { method: "POST", body: JSON.stringify({ ...data, id }) });
+    if (ins[0]) setProducts((p) => [...p, ins[0]]);
+  });
+  const deleteProduct = (id) => run(async () => { await sb(`products?id=eq.${id}`, { method: "DELETE", headers: { Prefer: "return=minimal" } }); setProducts((p) => p.filter((x) => x.id !== id)); });
+  const patchIngredient = (id, patch) => run(async () => { await sb(`ingredients?id=eq.${id}`, patchOpts(patch)); setIngredients((p) => p.map((i) => (i.id === id ? { ...i, ...patch } : i))); });
+  const addIngredient = (data) => run(async () => {
+    const id = Math.max(0, ...ingredients.map((i) => i.id)) + 1;
+    const ins = await sb("ingredients", { method: "POST", body: JSON.stringify({ ...data, id }) });
+    if (ins[0]) setIngredients((p) => [...p, ins[0]]);
+  });
+  const deleteIngredient = (id) => run(async () => { await sb(`ingredients?id=eq.${id}`, { method: "DELETE", headers: { Prefer: "return=minimal" } }); setIngredients((p) => p.filter((i) => i.id !== id)); });
+  const patchDelivery = (id, patch) => run(async () => { await sb(`delivery_prices?id=eq.${id}`, patchOpts(patch)); setDelivery((p) => p.map((d) => (d.id === id ? { ...d, ...patch } : d))); });
+
+  if (!isAdmin) return <AdminLogin T={T} onLogin={async () => { await loadAdminData(); setIsAdmin(true); }} onBack={onExit} />;
+
+  const tabs = [
+    { key: "dashboard", label: "Dashboard", icon: "📊" }, { key: "orders", label: T.adm_orders, icon: "📋" },
+    { key: "products", label: T.adm_products, icon: "📦" }, { key: "collections", label: "Collections", icon: "🗂️" },
+    { key: "reviews", label: "Reviews", icon: "⭐" }, { key: "texts", label: "Site texts", icon: "✏️" },
+    { key: "ingredients", label: T.adm_ing, icon: "🧪" }, { key: "delivery", label: T.adm_delivery, icon: "🚚" },
+  ];
+  return (
+    <div className="admin-layout">
+      <aside className="admin-sidebar">
+        <div className="sidebar-logo">MALVERA</div>
+        {tabs.map((tb) => (
+          <button key={tb.key} className={`sidebar-link ${tab === tb.key ? "active" : ""}`} onClick={() => setTab(tb.key)}><span style={{ fontSize: "1.1rem" }}>{tb.icon}</span><span>{tb.label}</span></button>
+        ))}
+        <button className="sidebar-link sidebar-logout" onClick={onExit}><span style={{ fontSize: "1.1rem" }}>🌐</span><span>View site</span></button>
+        <button className="sidebar-link" onClick={() => { signOut(); onExit(); }}><span style={{ fontSize: "1.1rem" }}>🚪</span><span>{T.adm_logout}</span></button>
+      </aside>
+      <main className="admin-main">
+        <h2 className="admin-title">{tabs.find((x) => x.key === tab).label}</h2>
+        {tab === "dashboard" && <DashboardTab orders={orders} products={products} ingredients={ingredients} />}
+        {tab === "orders" && <OrdersTab T={T} orders={orders} onUpdateStatus={updateOrderStatus} onDeleteOrder={deleteOrder} />}
+        {tab === "products" && <ProductsTab T={T} products={products} collections={collections} onPatch={patchProduct} onAdd={addProduct} onDelete={deleteProduct} />}
+        {tab === "collections" && <CollectionsTab collections={collections} setCollections={setCollections} run={run} />}
+        {tab === "reviews" && <ReviewsTab reviews={reviews} setReviews={setReviews} run={run} />}
+        {tab === "texts" && <TextsTab texts={texts} setTexts={setTexts} run={run} />}
+        {tab === "ingredients" && <IngredientsTab T={T} ingredients={ingredients} onPatch={patchIngredient} onAdd={addIngredient} onDelete={deleteIngredient} />}
+        {tab === "delivery" && <DeliveryTab T={T} delivery={delivery} onPatch={patchDelivery} />}
+      </main>
+    </div>
   );
-  if (page === "admin") return (
-    <>
-      <style>{CSS}</style>
-      <Admin T={T} shared={{ products, setProducts, collections, setCollections, texts, setTexts, delivery, setDelivery, reviews, setReviews }} onExit={() => { setPage("home"); loadPublic(); }} />
-    </>
+}
+
+function AdminLogin({ T, onLogin, onBack }) {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const handle = async () => {
+    setLoading(true);
+    const r = await sbAuth(email.trim(), pass);
+    if (r.success) await onLogin(); else setErr(true);
+    setLoading(false);
+  };
+  return (
+    <div className="admin-login">
+      <div className="login-card">
+        <div className="login-logo">MALVERA</div>
+        <h2 className="login-title">Admin</h2>
+        <div className="form-group"><label className="form-label">{T.adm_email}</label><input className="form-input" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr(false); }} /></div>
+        <div className="form-group"><label className="form-label">{T.adm_pass}</label><input className="form-input" type="password" value={pass} onChange={(e) => { setPass(e.target.value); setErr(false); }} onKeyDown={(e) => e.key === "Enter" && handle()} /></div>
+        {err && <p style={{ color: "var(--red)", fontSize: "0.8rem", marginBottom: 12 }}>{T.adm_wrong}</p>}
+        <button className="btn-primary" style={{ width: "100%", marginBottom: 12 }} onClick={handle} disabled={loading}>{loading ? "..." : T.adm_signin}</button>
+        <button className="btn-outline" style={{ width: "100%" }} onClick={onBack}>{T.back}</button>
+      </div>
+    </div>
   );
-  const sp = products.find((p) => p.id === selId);
-  const showBar = ["shop", "detail", "home"].includes(page) && cartCount > 0;
+}
+
+// ---------------- DASHBOARD + CUSTOMER ANALYTICS ----------------
+function DashboardTab({ orders, products, ingredients }) {
+  const DAY = 864e5;
+  const valid = orders.filter((o) => !NOSTOCK.includes(o.status));
+  const sum = (a) => a.reduce((s, o) => s + (Number(o.total) || 0), 0);
+  const by = {};
+  valid.forEach((o) => { const k = normPhone(o.phone); if (k) (by[k] = by[k] || []).push(o); });
+  const custs = Object.entries(by).map(([phone, os]) => {
+    os.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    return { phone, name: os[os.length - 1].name, os, n: os.length, spent: sum(os), last: os[os.length - 1].created_at };
+  });
+  const ret = custs.filter((c) => c.n >= 2);
+  const unique = custs.length, one = unique - ret.length;
+  const repeat = unique ? Math.round((ret.length / unique) * 100) : 0;
+  const totalRev = sum(valid), retRev = ret.reduce((s, c) => s + c.spent, 0);
+  const gaps = ret.map((c) => (new Date(c.os[1].created_at) - new Date(c.os[0].created_at)) / DAY).sort((a, b) => a - b);
+  const avgGap = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : null;
+  const medGap = gaps.length ? gaps[Math.floor(gaps.length / 2)] : null;
+  const fd = (d) => (d === null ? "—" : d < 1 ? "< 1 day" : `${Math.round(d)} days`);
+  const delivered = sum(orders.filter((o) => o.status === "delivered"));
+  const aov = valid.length ? Math.round(totalRev / valid.length) : 0;
+  const waiting = orders.filter((o) => o.status === "pending" || o.status === "preorder").length;
+
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleString("en", { month: "short" }), v: 0 }); }
+  valid.forEach((o) => { const d = new Date(o.created_at); const m = months.find((x) => x.key === `${d.getFullYear()}-${d.getMonth()}`); if (m) m.v += Number(o.total) || 0; });
+  const maxM = Math.max(1, ...months.map((m) => m.v));
+
+  const prod = {};
+  valid.forEach((o) => (o.items || []).forEach((it) => { const p = (prod[it.productName] = prod[it.productName] || { q: 0, r: 0 }); p.q += Number(it.qty) || 0; p.r += (Number(it.price) || 0) * (Number(it.qty) || 0); }));
+  const topProd = Object.entries(prod).sort((a, b) => b[1].q - a[1].q).slice(0, 5);
+  const wil = {};
+  valid.forEach((o) => { if (o.wilaya) wil[o.wilaya] = (wil[o.wilaya] || 0) + 1; });
+  const topWil = Object.entries(wil).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const st = {};
+  orders.forEach((o) => { st[o.status] = (st[o.status] || 0) + 1; });
+  const topCust = [...custs].sort((a, b) => b.spent - a.spent).slice(0, 8);
+  const lowP = products.filter((p) => p.active !== false && Number(p.stock) <= Number(p.threshold || 0));
+  const lowI = ingredients.filter((i) => i.threshold > 0 && i.qty <= i.threshold);
+  const Bars = ({ rows, fmt }) => { const mx = Math.max(1, ...rows.map((r) => r[1])); return rows.length === 0 ? <p className="muted">No data yet.</p> : rows.map(([l, v, c]) => <div className="bar-row" key={l}><span>{l}</span><div className="bar-t"><i style={{ width: `${(v / mx) * 100}%`, background: c }} /></div><b>{fmt ? fmt(v) : v}</b></div>); };
+  const Card = ({ n, l, sub, color }) => <div className="stat-card"><div className="stat-num" style={{ color, fontSize: String(n).length > 9 ? "1.4rem" : undefined }}>{n}</div><div className="stat-label">{l}</div>{sub && <div className="stat-sub">{sub}</div>}</div>;
   return (
     <>
-      <style>{CSS}</style>
-      <div className={lang === "ar" ? "rtl" : "ltr"}>
-        <nav className="nav"><div className="nav-in">
-          <button className="nav-logo brand" onClick={() => go("home")}>MALVERA</button>
-          <div className="nav-links">
-            <button className={`nav-link ${page === "home" ? "active" : ""}`} onClick={() => go("home")}>{T.nav_home}</button>
-            <button className={`nav-link ${["shop", "detail"].includes(page) ? "active" : ""}`} onClick={() => openShop("all")}>{T.nav_shop}</button>
-            <button className="nav-link" onClick={() => goSection("story")}>{T.nav_story}</button>
-            <button className="nav-link" onClick={() => goSection("contact")}>{T.nav_contact}</button>
+      <div className="stat-grid">
+        <Card n={orders.length} l="Total orders" />
+        <Card n={waiting} l="Waiting (pending + pre-order)" color="var(--orange)" />
+        <Card n={money(delivered)} l="Sales (delivered)" color="#155724" />
+        <Card n={money(aov)} l="Average order" />
+      </div>
+      <h3 className="serif" style={{ fontSize: "1.4rem", color: "var(--mocha)", margin: "6px 0 12px" }}>Customers</h3>
+      <div className="stat-grid">
+        <Card n={unique} l="Unique customers" sub="by phone number" />
+        <Card n={one} l="One-time customers" />
+        <Card n={ret.length} l="Returning customers" sub="2 orders or more" color="#155724" />
+        <Card n={`${repeat}%`} l="Returning rate" color="var(--gold3)" />
+        <Card n={money(retRev)} l="Returning revenue" sub={totalRev ? `${Math.round((retRev / totalRev) * 100)}% of all revenue` : ""} />
+        <Card n={fd(avgGap)} l="Time to 2nd order" sub={gaps.length ? `average · median ${fd(medGap)}` : "needs returning customers"} />
+        <Card n={unique ? (valid.length / unique).toFixed(1) : "0"} l="Orders per customer" />
+      </div>
+      <p className="muted" style={{ marginBottom: 18 }}>Customers are counted by phone number. Cancelled and returned orders are not counted.</p>
+      <div className="two">
+        <div className="admin-card"><h3>Revenue by month</h3><div className="mbars">{months.map((m) => <div key={m.key}><span>{m.v ? Math.round(m.v / 1000) + "k" : ""}</span><i style={{ height: `${(m.v / maxM) * 100}%` }} /><span>{m.label}</span></div>)}</div></div>
+        <div className="admin-card"><h3>Orders by status</h3><Bars rows={STATUS_LIST.filter((s) => st[s]).map((s) => [s, st[s], STATUS_SEL[s][1]])} /></div>
+        <div className="admin-card"><h3>Best-selling products</h3><Bars rows={topProd.map(([n, v]) => [n, v.q])} fmt={(v) => `${v} sold`} /></div>
+        <div className="admin-card"><h3>Top wilayas</h3><Bars rows={topWil} fmt={(v) => `${v} orders`} /></div>
+      </div>
+      <div className="admin-card">
+        <h3>Best customers</h3>
+        {topCust.length === 0 ? <p className="muted">No customers yet.</p> : (
+          <table className="rtable">
+            <thead><tr><th>Customer</th><th>Phone</th><th>Orders</th><th>Spent</th><th>Last order</th></tr></thead>
+            <tbody>{topCust.map((c) => (
+              <tr key={c.phone}>
+                <td data-label="Customer"><strong>{c.name}</strong> {c.n >= 2 && <span className="badge badge-vip">returning</span>}</td>
+                <td data-label="Phone"><a href={waLink(c.phone)} target="_blank" rel="noreferrer" dir="ltr">{c.phone}</a></td>
+                <td data-label="Orders">{c.n}</td><td data-label="Spent">{money(c.spent)}</td>
+                <td data-label="Last order">{Math.max(0, Math.round((Date.now() - new Date(c.last)) / DAY))} days ago</td>
+              </tr>))}</tbody>
+          </table>
+        )}
+      </div>
+      {(lowP.length > 0 || lowI.length > 0) && (
+        <div className="admin-card">
+          <h3>Low stock</h3>
+          {lowP.map((p) => <div key={p.id} style={{ padding: "4px 0" }}><span className="badge badge-low">product</span> {p.name} — {p.stock} left</div>)}
+          {lowI.map((i) => <div key={i.id} style={{ padding: "4px 0" }}><span className="badge badge-low">ingredient</span> {i.name} — {i.qty} left</div>)}
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---------------- ORDERS ----------------
+function OrdersTab({ T, orders, onUpdateStatus, onDeleteOrder }) {
+  const [search, setSearch] = useState("");
+  const [fs, setFs] = useState("all");
+  const [fw, setFw] = useState("all");
+  const label = { pending: T.s_pending, preorder: T.s_preorder, confirmed: T.s_confirmed, delivered: T.s_delivered, cancelled: T.s_cancelled, returned: T.s_returned };
+  const cnt = {};
+  orders.filter((o) => !NOSTOCK.includes(o.status)).forEach((o) => { const k = normPhone(o.phone); cnt[k] = (cnt[k] || 0) + 1; });
+  const q = search.toLowerCase();
+  const filtered = orders.filter((o) => (fs === "all" || o.status === fs) && (fw === "all" || o.wilaya === fw) &&
+    ((o.name || "").toLowerCase().includes(q) || (o.product_name || "").toLowerCase().includes(q) || String(o.order_number || "").includes(q) || (o.phone || "").includes(q)));
+  const wilayas = [...new Set(orders.map((o) => o.wilaya).filter(Boolean))];
+  const exportCsv = () => {
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [["Order", "Date", "Name", "Phone", "Wilaya", "Delivery", "Commune", "Address", "Products", "Subtotal", "Delivery fee", "Total", "Status"]];
+    filtered.forEach((o) => rows.push([o.order_number, new Date(o.created_at).toLocaleString(), o.name, o.phone, o.wilaya, o.delivery_type, o.commune, o.address, o.product_name, o.subtotal, o.delivery_fee, o.total, o.status]));
+    const blob = new Blob(["﻿" + rows.map((r) => r.map(esc).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "malvera-orders.csv"; a.click();
+  };
+  return (
+    <div className="admin-card">
+      <div className="search-bar">
+        <input className="search-input" placeholder={T.search} value={search} onChange={(e) => setSearch(e.target.value)} />
+        <select className="select-filter" value={fs} onChange={(e) => setFs(e.target.value)}><option value="all">All statuses</option>{STATUS_LIST.map((s) => <option key={s} value={s}>{label[s]}</option>)}</select>
+        <select className="select-filter" value={fw} onChange={(e) => setFw(e.target.value)}><option value="all">All wilayas</option>{wilayas.map((w) => <option key={w} value={w}>{w}</option>)}</select>
+        <button className="btn-soft" onClick={exportCsv}>⬇ Export Excel (CSV)</button>
+      </div>
+      {filtered.length === 0 ? <p className="muted" style={{ padding: "20px 0" }}>{T.no_orders}</p> : (
+        <div style={{ overflowX: "auto" }}>
+          <table className="rtable">
+            <thead><tr><th>{T.c_order}</th><th>{T.c_name}</th><th>{T.c_product}</th><th>{T.c_total}</th><th>{T.c_wilaya}</th><th>Delivery</th><th>{T.c_phone}</th><th>{T.c_date}</th><th>{T.c_status}</th></tr></thead>
+            <tbody>
+              {filtered.map((o) => {
+                const colors = STATUS_SEL[o.status] || STATUS_SEL.pending;
+                const k = normPhone(o.phone);
+                return (
+                  <tr key={o.id} style={{ background: STATUS_BG[o.status] || "white" }}>
+                    <td data-label={T.c_order}><strong dir="ltr">{o.order_number ? `#${o.order_number}` : "—"}</strong></td>
+                    <td data-label={T.c_name}><div><strong>{o.name}</strong> {cnt[k] >= 2 && !NOSTOCK.includes(o.status) && <span className="badge badge-vip">returning ×{cnt[k]}</span>}<br /><span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{o.commune ? `${o.commune} - ` : ""}{o.address}</span></div></td>
+                    <td data-label={T.c_product}><div>{o.items && o.items.length > 0 ? o.items.map((it, i) => <div key={i} style={{ fontSize: "0.82rem" }}>{it.productName} <b>x{it.qty}</b>{it.preorder && <span className="badge badge-preorder" style={{ marginInlineStart: 6 }}>pre-order</span>}</div>) : o.product_name}</div></td>
+                    <td data-label={T.c_total}>{o.total ? <div><strong>{money(o.total)}</strong><br /><span style={{ fontSize: "0.7rem", color: "var(--muted)" }}>{money(o.subtotal)} + {money(o.delivery_fee)}</span></div> : "—"}</td>
+                    <td data-label={T.c_wilaya}>{o.wilaya}</td>
+                    <td data-label="Delivery"><span className={`badge ${o.delivery_type === "stopdesk" ? "badge-confirmed" : "badge-pending"}`}>{o.delivery_type === "stopdesk" ? "Stop Desk" : "Home"}</span></td>
+                    <td data-label={T.c_phone}><a href={`tel:${o.phone}`} dir="ltr">{o.phone}</a> <a href={waLink(o.phone, `Hello ${o.name}, this is Malvera about your order #${o.order_number}.`)} target="_blank" rel="noreferrer" title="WhatsApp" style={{ color: "#25a85a", verticalAlign: "middle" }}><Ico n="wa" s={18} /></a></td>
+                    <td data-label={T.c_date} style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{new Date(o.created_at).toLocaleString()}</td>
+                    <td data-label={T.c_status}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <select className="status-select" value={o.status} onChange={(e) => onUpdateStatus(o, e.target.value)} style={{ background: colors[0], color: colors[1], fontWeight: 500 }}>{STATUS_LIST.map((s) => <option key={s} value={s}>{label[s]}</option>)}</select>
+                        <button onClick={() => { if (window.confirm("Delete this order?")) onDeleteOrder(o.id); }} className="btn-danger">🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------- PRODUCTS ----------------
+function RichField({ label, value, onChange, rtl, rows = 4 }) {
+  const ref = useRef(null);
+  const bold = () => {
+    const el = ref.current; if (!el) return;
+    const a = el.selectionStart, b = el.selectionEnd, v = value || "";
+    onChange(a === b ? v.slice(0, a) + "****" + v.slice(b) : v.slice(0, a) + "**" + v.slice(a, b) + "**" + v.slice(b));
+    setTimeout(() => { el.focus(); const p = a === b ? a + 2 : b + 4; el.setSelectionRange(p, p); }, 0);
+  };
+  return (
+    <div className="form-group" style={{ marginBottom: 12 }}>
+      <div className="ed-lbl"><span>{label}</span><button type="button" onClick={bold} title="Select text, then press B to make it bold">B</button></div>
+      <textarea ref={ref} className="form-textarea" rows={rows} dir={rtl ? "rtl" : "ltr"} value={value || ""} onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+const Field = ({ label, children }) => <div className="form-group" style={{ marginBottom: 12 }}><div className="ed-lbl"><span>{label}</span></div>{children}</div>;
+
+function ProductEditor({ p, collections, onSave, onClose, onDelete }) {
+  const isNew = !p;
+  const [d, setD] = useState(() => p ? {
+    ...p, price: p.price ?? "", discount_price: p.discount_price ?? "", details: { ...(p.details || {}) }, images: imgsOf(p),
+    cats: (p.category || "").split(",").map((s) => s.trim()).filter(Boolean),
+  } : { name: "", name_ar: "", short_desc: "", short_desc_ar: "", full_desc: "", full_desc_ar: "", price: "", discount_price: "", stock: 0, threshold: 0, preorder: false, active: true, details: {}, images: [], cats: [] });
+  const [up, setUp] = useState(false);
+  const fileRef = useRef(null);
+  const set = (k, v) => setD((x) => ({ ...x, [k]: v }));
+  const setDet = (k, v) => setD((x) => ({ ...x, details: { ...x.details, [k]: v } }));
+  const toggleCat = (s) => set("cats", d.cats.includes(s) ? d.cats.filter((x) => x !== s) : [...d.cats, s]);
+  const addPhotos = async (files) => {
+    setUp(true);
+    let imgs = [...d.images];
+    for (const f of Array.from(files)) {
+      if (imgs.length >= 5) { alert("Maximum 5 photos per product."); break; }
+      const url = await uploadPhoto(f, p ? p.id : "new");
+      if (url) imgs.push(url); else alert("Photo upload failed. If your session expired, log out and log in again.");
+    }
+    set("images", imgs); setUp(false);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+  const move = (i, dir) => { const a = [...d.images]; const j = i + dir; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; set("images", a); };
+  const save = async () => {
+    if (!d.name.trim() || !String(d.price).trim()) { alert("Please fill the product name and the price."); return; }
+    const payload = {
+      name: d.name.trim(), name_ar: d.name_ar || null, short_desc: d.short_desc || "", short_desc_ar: d.short_desc_ar || null,
+      full_desc: d.full_desc || "", full_desc_ar: d.full_desc_ar || null, price: String(d.price).trim(),
+      discount_price: String(d.discount_price || "").trim() || null, stock: Number(d.stock) || 0, threshold: Number(d.threshold) || 0,
+      category: d.cats.join(","), preorder: !!d.preorder, active: d.active !== false, details: d.details, images: d.images, image_url: d.images[0] || null,
+    };
+    const ok = await onSave(payload);
+    if (ok) onClose();
+  };
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h3 className="modal-title">{isNew ? "Add a new product" : "Edit product"}</h3>
+
+        <div className="ed-sec">Name and prices</div>
+        <div className="ed-2">
+          <Field label="Name (English) *"><input className="form-input" value={d.name} onChange={(e) => set("name", e.target.value)} /></Field>
+          <Field label="الاسم (عربي)"><input className="form-input" dir="rtl" value={d.name_ar || ""} onChange={(e) => set("name_ar", e.target.value)} /></Field>
+        </div>
+        <div className="ed-4">
+          <Field label="Price (DA) *"><input className="form-input" value={d.price} onChange={(e) => set("price", e.target.value)} /></Field>
+          <Field label="Discount price"><input className="form-input" value={d.discount_price} onChange={(e) => set("discount_price", e.target.value)} placeholder="empty = none" /></Field>
+          <Field label="Stock"><input className="form-input" type="number" min="0" value={d.stock} onChange={(e) => set("stock", e.target.value)} /></Field>
+          <Field label="Low-stock alert at"><input className="form-input" type="number" min="0" value={d.threshold} onChange={(e) => set("threshold", e.target.value)} /></Field>
+        </div>
+        <label className="chk"><input type="checkbox" checked={!!d.preorder} onChange={(e) => set("preorder", e.target.checked)} />Allow pre-order when out of stock</label>
+        <label className="chk"><input type="checkbox" checked={d.active !== false} onChange={(e) => set("active", e.target.checked)} />Visible on the website</label>
+
+        <div className="ed-sec">Collections</div>
+        <div>{collections.map((k) => <label className="chk" key={k.id}><input type="checkbox" checked={d.cats.includes(k.slug)} onChange={() => toggleCat(k.slug)} />{k.name_en}</label>)}</div>
+
+        <div className="ed-sec">Photos (up to 5 - the first one is the main photo)</div>
+        <div className="photo-row">
+          {d.images.map((u, i) => (
+            <div className="photo-box" key={u + i}>
+              <img src={u} alt="" />
+              <small>{i === 0 ? "MAIN" : `Photo ${i + 1}`}</small>
+              <div><button type="button" onClick={() => move(i, -1)}>←</button><button type="button" onClick={() => move(i, 1)}>→</button><button type="button" onClick={() => set("images", d.images.filter((_, j) => j !== i))}>✕</button></div>
+            </div>
+          ))}
+          {d.images.length < 5 && (
+            <div className="photo-box" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 120 }}>
+              <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={(e) => addPhotos(e.target.files)} />
+              <button type="button" className="btn-soft" onClick={() => fileRef.current && fileRef.current.click()}>{up ? "⏳ Uploading..." : "📷 Add photos"}</button>
+            </div>
+          )}
+        </div>
+
+        <div className="ed-sec">Descriptions (use the B button or **text** for bold - press Enter for a new line)</div>
+        <div className="ed-2">
+          <RichField label="Short description (English)" value={d.short_desc} onChange={(v) => set("short_desc", v)} rows={2} />
+          <RichField label="وصف قصير (عربي)" value={d.short_desc_ar} onChange={(v) => set("short_desc_ar", v)} rtl rows={2} />
+          <RichField label="Full description (English)" value={d.full_desc} onChange={(v) => set("full_desc", v)} />
+          <RichField label="الوصف الكامل (عربي)" value={d.full_desc_ar} onChange={(v) => set("full_desc_ar", v)} rtl />
+        </div>
+
+        <div className="ed-sec">Product details (shown on the product page, leave empty to hide)</div>
+        {[["availability", "Availability note (example: back in stock in December)", "ملاحظة التوفر"], ...DETAIL_FIELDS].map(([k, en, ar]) => (
+          <div className="ed-2" key={k}>
+            <RichField label={en} value={d.details[k + "_en"]} onChange={(v) => setDet(k + "_en", v)} rows={k === "availability" ? 1 : 3} />
+            <RichField label={ar} value={d.details[k + "_ar"]} onChange={(v) => setDet(k + "_ar", v)} rtl rows={k === "availability" ? 1 : 3} />
           </div>
-          <div className="nav-act">
-            <button className="lang-btn" onClick={() => setLang(lang === "en" ? "ar" : "en")}>{lang === "en" ? "عربي" : "EN"}</button>
-            <button className="basket-btn" onClick={() => go("order")}><Ico n="bag" s={18} /><span className="bt">{T.basket}</span>{cartCount > 0 && <span className="cart-badge">{cartCount}</span>}</button>
-          </div>
-        </div></nav>
-        {page === "home" && <Home c={c} />}
-        {page === "shop" && <ShopPage c={c} />}
-        {page === "detail" && sp && <DetailPage c={c} p={sp} />}
-        {page === "order" && <OrderPage c={c} />}
-        {page === "confirm" && <ConfirmPage c={c} />}
-        <Footer c={c} />
-        {page !== "order" && <a className="wa-float" href={waLink(ct("c_whatsapp"))} target="_blank" rel="noreferrer" aria-label="WhatsApp"><Ico n="wa" s={28} /></a>}
-        {showBar && <button className="cart-bar" onClick={() => go("order")}><span>{cartCount} · {money(subtotal)}</span><span>{T.view_basket}</span></button>}
+        ))}
+
+        <div style={{ display: "flex", gap: 12, marginTop: 20, flexWrap: "wrap" }}>
+          <button className="btn-primary" style={{ flex: 1 }} onClick={save}>Save product</button>
+          <button className="btn-outline" style={{ flex: 1 }} onClick={onClose}>Cancel</button>
+          {!isNew && <button className="btn-danger" onClick={() => { if (window.confirm("Delete this product for good?")) { onDelete(p.id); onClose(); } }}>🗑️ Delete</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductsTab({ T, products, collections, onPatch, onAdd, onDelete }) {
+  const [edit, setEdit] = useState(null);
+  const [stockEd, setStockEd] = useState({});
+  const nameOf = (s) => (collections.find((k) => k.slug === s.trim()) || {}).name_en || s;
+  return (
+    <div className="admin-card">
+      <button className="btn-add" onClick={() => setEdit("new")}>+ Add new product</button>
+      {edit && <ProductEditor p={edit === "new" ? null : edit} collections={collections} onClose={() => setEdit(null)} onDelete={onDelete}
+        onSave={(payload) => (edit === "new" ? onAdd(payload) : onPatch(edit.id, payload))} />}
+      <div style={{ overflowX: "auto" }}>
+        <table className="rtable">
+          <thead><tr><th>Photo</th><th>Product</th><th>{T.stock_qty}</th><th>Price</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {products.map((p) => {
+              const low = Number(p.stock) <= Number(p.threshold || 0);
+              const img = imgsOf(p)[0];
+              return (
+                <tr key={p.id} className={low ? "low" : ""}>
+                  <td data-label="Photo">{img ? <img src={img} alt="" className="photo-preview" /> : <div className="photo-preview" style={{ background: "var(--beige2)" }} />}</td>
+                  <td data-label="Product"><strong>{p.name}</strong>{p.name_ar && <div dir="rtl" style={{ fontSize: "0.8rem", color: "var(--muted)" }}>{p.name_ar}</div>}<div style={{ fontSize: "0.72rem", color: "var(--muted)" }}>{(p.category || "").split(",").filter(Boolean).map(nameOf).join(" · ")}</div></td>
+                  <td data-label={T.stock_qty}><input className="qty-input" type="number" min="0" value={stockEd[p.id] ?? p.stock} onChange={(e) => setStockEd((s) => ({ ...s, [p.id]: e.target.value }))}
+                    onBlur={() => { if (stockEd[p.id] !== undefined && Number(stockEd[p.id]) !== Number(p.stock)) onPatch(p.id, { stock: Number(stockEd[p.id]) || 0 }); setStockEd((s) => { const n = { ...s }; delete n[p.id]; return n; }); }} /></td>
+                  <td data-label="Price">{p.discount_price ? <><s style={{ color: "var(--muted)" }}>{p.price}</s> {p.discount_price}</> : p.price}</td>
+                  <td data-label="Status">
+                    {p.active === false && <span className="badge badge-cancelled">hidden</span>}{" "}
+                    {Number(p.stock) <= 0 ? (p.preorder ? <span className="badge badge-preorder">pre-order</span> : <span className="badge badge-low">sold out</span>) : low ? <span className="badge badge-low">{T.low_stock}</span> : <span className="badge badge-ok">OK</span>}
+                  </td>
+                  <td className="center"><button className="btn-save" onClick={() => setEdit(p)}>✏️ Edit</button></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ---------------- COLLECTIONS ----------------
+function CollectionsTab({ collections, setCollections, run }) {
+  const [ed, setEd] = useState({});
+  const [n, setN] = useState({ name_en: "", name_ar: "" });
+  const put = (id, k, v) => setEd((e) => ({ ...e, [id]: { ...e[id], [k]: v } }));
+  const save = (k) => run(async () => {
+    const e = ed[k.id]; if (!e) return;
+    const patch = { ...e }; if (patch.sort !== undefined) patch.sort = Number(patch.sort) || 0;
+    await sb(`collections?id=eq.${k.id}`, patchOpts(patch));
+    setCollections((c) => c.map((x) => (x.id === k.id ? { ...x, ...patch } : x)));
+    setEd((x) => { const m = { ...x }; delete m[k.id]; return m; });
+  });
+  const add = () => run(async () => {
+    const slug = slugify(n.name_en);
+    if (!slug) { alert("Please write the English name (letters and numbers)."); return; }
+    if (collections.some((c) => c.slug === slug)) { alert("This collection already exists."); return; }
+    const ins = await sb("collections", { method: "POST", body: JSON.stringify({ slug, name_en: n.name_en.trim(), name_ar: n.name_ar.trim() || null, sort: collections.length + 1 }) });
+    if (ins[0]) setCollections((c) => [...c, ins[0]]);
+    setN({ name_en: "", name_ar: "" });
+  });
+  const del = (k) => { if (!window.confirm(`Delete the collection "${k.name_en}"? Products are not deleted.`)) return; run(async () => { await sb(`collections?id=eq.${k.id}`, { method: "DELETE", headers: { Prefer: "return=minimal" } }); setCollections((c) => c.filter((x) => x.id !== k.id)); }); };
+  return (
+    <>
+      <div className="admin-card">
+        <h3>Add a collection</h3>
+        <div className="ed-2">
+          <Field label="Name (English)"><input className="form-input" value={n.name_en} onChange={(e) => setN({ ...n, name_en: e.target.value })} /></Field>
+          <Field label="الاسم (عربي)"><input className="form-input" dir="rtl" value={n.name_ar} onChange={(e) => setN({ ...n, name_ar: e.target.value })} /></Field>
+        </div>
+        <button className="btn-add" onClick={add}>+ Add collection</button>
+        <p className="muted">After adding it, open a product and tick the collection to put the product in it.</p>
+      </div>
+      <div className="admin-card">
+        <table className="rtable">
+          <thead><tr><th>English</th><th>عربي</th><th>Order</th><th></th></tr></thead>
+          <tbody>{collections.map((k) => {
+            const e = ed[k.id] || {};
+            return (
+              <tr key={k.id}>
+                <td data-label="English"><input className="qty-input" style={{ width: 160 }} value={e.name_en ?? k.name_en} onChange={(x) => put(k.id, "name_en", x.target.value)} /></td>
+                <td data-label="عربي"><input className="qty-input" dir="rtl" style={{ width: 160 }} value={e.name_ar ?? k.name_ar ?? ""} onChange={(x) => put(k.id, "name_ar", x.target.value)} /></td>
+                <td data-label="Order"><input className="qty-input" type="number" style={{ width: 70 }} value={e.sort ?? k.sort ?? 0} onChange={(x) => put(k.id, "sort", x.target.value)} /></td>
+                <td className="center"><div style={{ display: "flex", gap: 6 }}><button className="btn-save" style={{ opacity: ed[k.id] ? 1 : 0.5 }} onClick={() => save(k)}>Save</button><button className="btn-danger" onClick={() => del(k)}>🗑️</button></div></td>
+              </tr>
+            );
+          })}</tbody>
+        </table>
       </div>
     </>
+  );
+}
+
+// ---------------- REVIEWS ----------------
+function ReviewsTab({ reviews, setReviews, run }) {
+  const blank = { name: "", city: "", stars: 5, text_en: "", text_ar: "", visible: true };
+  const [n, setN] = useState(blank);
+  const [ed, setEd] = useState({});
+  const put = (id, k, v) => setEd((e) => ({ ...e, [id]: { ...e[id], [k]: v } }));
+  const add = () => run(async () => {
+    if (!n.name.trim() || !(n.text_en.trim() || n.text_ar.trim())) { alert("Please write the customer name and what she said."); return; }
+    const ins = await sb("reviews", { method: "POST", body: JSON.stringify({ ...n, stars: Number(n.stars) }) });
+    if (ins[0]) setReviews((r) => [ins[0], ...r]);
+    setN(blank);
+  });
+  const save = (r) => run(async () => {
+    const e = ed[r.id]; if (!e) return;
+    const patch = { ...e }; if (patch.stars !== undefined) patch.stars = Number(patch.stars);
+    await sb(`reviews?id=eq.${r.id}`, patchOpts(patch));
+    setReviews((a) => a.map((x) => (x.id === r.id ? { ...x, ...patch } : x)));
+    setEd((x) => { const m = { ...x }; delete m[r.id]; return m; });
+  });
+  const del = (r) => { if (window.confirm("Delete this review?")) run(async () => { await sb(`reviews?id=eq.${r.id}`, { method: "DELETE", headers: { Prefer: "return=minimal" } }); setReviews((a) => a.filter((x) => x.id !== r.id)); }); };
+  const Form = ({ v, onChange, k }) => (
+    <>
+      <div className="ed-4">
+        <Field label="Customer name"><input className="form-input" value={v.name || ""} onChange={(e) => onChange(k, "name", e.target.value)} /></Field>
+        <Field label="City"><input className="form-input" value={v.city || ""} onChange={(e) => onChange(k, "city", e.target.value)} /></Field>
+        <Field label="Stars"><select className="form-select" value={v.stars} onChange={(e) => onChange(k, "stars", e.target.value)}>{[5, 4, 3, 2, 1].map((s) => <option key={s} value={s}>{"★".repeat(s)}</option>)}</select></Field>
+        <Field label="Show on website"><label className="chk"><input type="checkbox" checked={v.visible !== false} onChange={(e) => onChange(k, "visible", e.target.checked)} />Visible</label></Field>
+      </div>
+      <div className="ed-2">
+        <Field label="What she said (English)"><textarea className="form-textarea" rows={2} value={v.text_en || ""} onChange={(e) => onChange(k, "text_en", e.target.value)} /></Field>
+        <Field label="ماذا قالت (عربي)"><textarea className="form-textarea" rows={2} dir="rtl" value={v.text_ar || ""} onChange={(e) => onChange(k, "text_ar", e.target.value)} /></Field>
+      </div>
+    </>
+  );
+  return (
+    <>
+      <div className="admin-card">
+        <h3>Add a review</h3>
+        <Form v={n} onChange={(k, f, val) => setN((x) => ({ ...x, [f]: val }))} />
+        <button className="btn-add" onClick={add}>+ Add review</button>
+        <p className="muted">If there are no visible reviews, the reviews section disappears from the home page.</p>
+      </div>
+      {reviews.map((r) => (
+        <div className="admin-card" key={r.id}>
+          <Form v={{ ...r, ...(ed[r.id] || {}) }} onChange={(id, f, val) => put(id, f, val)} k={r.id} />
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <Stars n={Number((ed[r.id] || {}).stars ?? r.stars)} s={16} />
+            <button className="btn-save" style={{ marginInlineStart: "auto", opacity: ed[r.id] ? 1 : 0.5 }} onClick={() => save(r)}>Save</button>
+            <button className="btn-danger" onClick={() => del(r)}>🗑️</button>
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ---------------- SITE TEXTS ----------------
+function TextsTab({ texts, setTexts, run }) {
+  const [ed, setEd] = useState({});
+  const [up, setUp] = useState("");
+  const upsert = (key, en, ar) => run(async () => {
+    await sb("site_texts?on_conflict=key", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ key, en, ar }) });
+    setTexts((t) => ({ ...t, [key]: { en, ar } }));
+  });
+  const reset = (key) => run(async () => {
+    await sb(`site_texts?key=eq.${key}`, { method: "DELETE", headers: { Prefer: "return=minimal" } });
+    setTexts((t) => { const m = { ...t }; delete m[key]; return m; });
+    setEd((x) => { const m = { ...x }; delete m[key]; return m; });
+  });
+  const img = async (key, file) => {
+    if (!file) return;
+    setUp(key);
+    const url = await uploadPhoto(file, key);
+    if (url) await upsert(key, url, url); else alert("Upload failed. If your session expired, log out and log in again.");
+    setUp("");
+  };
+  const ImgSetting = ({ k, label, help }) => {
+    const url = texts[k] && texts[k].en;
+    return (
+      <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", padding: "8px 0" }}>
+        {url ? <img src={url} alt="" style={{ width: 120, height: 80, objectFit: "cover", borderRadius: 6 }} /> : <div style={{ width: 120, height: 80, background: "var(--beige2)", borderRadius: 6 }} />}
+        <div style={{ flex: 1, minWidth: 180 }}><strong>{label}</strong><div className="muted">{help}</div></div>
+        <label className="btn-soft" style={{ cursor: "pointer" }}>{up === k ? "⏳..." : "📷 Upload"}<input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => img(k, e.target.files[0])} /></label>
+        {url && <button className="btn-danger" onClick={() => reset(k)}>Remove</button>}
+      </div>
+    );
+  };
+  return (
+    <>
+      <div className="admin-card">
+        <h3>Pictures</h3>
+        <ImgSetting k="hero_bg" label="Home page background" help="A nature photo. It is shown very faded behind the title." />
+        <ImgSetting k="story_img" label="Our story picture" help="A photo of you or your workshop." />
+      </div>
+      <p className="muted" style={{ marginBottom: 16 }}>Change any text of the home page below. Write the English and the Arabic versions, then press Save. If you leave a box empty, the default text is used. Use **text** for bold.</p>
+      {TEXT_GROUPS.map((g) => (
+        <div className="admin-card" key={g.g}>
+          <h3>{g.g}</h3>
+          {g.items.map(([k, label, den, dar]) => {
+            const saved = texts[k] || {};
+            const cur = { en: (ed[k] && ed[k].en) ?? saved.en ?? den, ar: (ed[k] && ed[k].ar) ?? saved.ar ?? dar };
+            const dirty = !!ed[k];
+            const long = den.length > 60;
+            return (
+              <div key={k} style={{ padding: "10px 0", borderTop: "1px solid var(--beige2)" }}>
+                <div className="ed-lbl"><span><strong>{label}</strong></span><span>{texts[k] && <button type="button" onClick={() => reset(k)} title="Go back to the default text" style={{ fontWeight: 400 }}>reset</button>}</span></div>
+                <div className="ed-2">
+                  <textarea className="form-textarea" rows={long ? 3 : 1} style={{ minHeight: 0 }} value={cur.en} onChange={(e) => setEd((x) => ({ ...x, [k]: { en: e.target.value, ar: cur.ar } }))} />
+                  <textarea className="form-textarea" rows={long ? 3 : 1} style={{ minHeight: 0 }} dir="rtl" value={cur.ar} onChange={(e) => setEd((x) => ({ ...x, [k]: { en: cur.en, ar: e.target.value } }))} />
+                </div>
+                {dirty && <button className="btn-save" style={{ marginTop: 8 }} onClick={async () => { if (await upsert(k, cur.en, cur.ar)) setEd((x) => { const m = { ...x }; delete m[k]; return m; }); }}>Save</button>}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </>
+  );
+}
+
+// ---------------- INGREDIENTS ----------------
+function IngredientsTab({T,ingredients,onPatch,onAdd,onDelete}) {
+  const emptyI = {name:"",category:"Base Ingredients",qty:0,threshold:0};
+  const [edits,setEdits] = useState({});
+  const [search,setSearch] = useState("");
+  const [filterCat,setFilterCat] = useState("all");
+  const [showAdd,setShowAdd] = useState(false);
+  const [newIng,setNewIng] = useState(emptyI);
+  const setEdit = (id,field,val)=>setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
+  const save = async (ing)=>{
+    const ed = edits[ing.id];
+    if (!ed) return;
+    const patch = {};
+    if (ed.qty!==undefined) patch.qty = Number(ed.qty)||0;
+    if (ed.threshold!==undefined) patch.threshold = Number(ed.threshold)||0;
+    await onPatch(ing.id,patch);
+    setEdits(e=>{const n={...e};delete n[ing.id];return n;});
+  };
+  const handleAdd = async ()=>{
+    if (!newIng.name) { alert("Please fill the name."); return; }
+    await onAdd({...newIng,qty:Number(newIng.qty)||0,threshold:Number(newIng.threshold)||0});
+    setNewIng(emptyI);
+    setShowAdd(false);
+  };
+  const cats = [...new Set(ingredients.map(i=>i.category))];
+  const filtered = ingredients.filter(i=>(filterCat==="all"||i.category===filterCat)&&(i.name||"").toLowerCase().includes(search.toLowerCase()));
+  const grouped = cats.reduce((acc,cat)=>{const items=filtered.filter(i=>i.category===cat);if(items.length)acc[cat]=items;return acc;},{});
+  return (
+    <div className="admin-card">
+      <button className="btn-add" onClick={()=>setShowAdd(true)}>+ Add New Ingredient</button>
+      {showAdd&&(
+        <div className="modal-overlay" onClick={()=>setShowAdd(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <h3 className="modal-title">Add New Ingredient</h3>
+            <div className="form-group">
+              <label className="form-label">Name</label>
+              <input className="form-input" value={newIng.name} onChange={e=>setNewIng(i=>({...i,name:e.target.value}))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select className="form-select" value={newIng.category} onChange={e=>setNewIng(i=>({...i,category:e.target.value}))}>
+                {ING_CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div style={{display:"flex",gap:12}}>
+              <div className="form-group" style={{flex:1}}>
+                <label className="form-label">Quantity (g)</label>
+                <input className="form-input" type="number" min="0" value={newIng.qty} onChange={e=>setNewIng(i=>({...i,qty:e.target.value}))} />
+              </div>
+              <div className="form-group" style={{flex:1}}>
+                <label className="form-label">Alert at (g)</label>
+                <input className="form-input" type="number" min="0" value={newIng.threshold} onChange={e=>setNewIng(i=>({...i,threshold:e.target.value}))} />
+              </div>
+            </div>
+            <div style={{display:"flex",gap:12}}>
+              <button className="btn-primary" style={{flex:1,padding:13}} onClick={handleAdd}>Add Ingredient</button>
+              <button className="btn-outline" style={{flex:1,padding:13}} onClick={()=>setShowAdd(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="search-bar">
+        <input className="search-input" placeholder={T.search} value={search} onChange={e=>setSearch(e.target.value)} />
+        <select className="select-filter" value={filterCat} onChange={e=>setFilterCat(e.target.value)}>
+          <option value="all">All Categories</option>
+          {cats.map(c=><option key={c} value={c}>{c}</option>)}
+        </select>
+      </div>
+      <div style={{overflowX:"auto"}}>
+        <table className="rtable">
+          <thead><tr><th>Ingredient</th><th>Qty (g)</th><th>{T.threshold}</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {Object.entries(grouped).map(([cat,items])=>(
+              <Fragment key={cat}>
+                <tr className="cat-row"><td colSpan={5} className="ing-cat">{cat}</td></tr>
+                {items.map(ing=>{
+                  const ed = edits[ing.id]||{};
+                  const isLow = ing.threshold>0&&ing.qty<=ing.threshold;
+                  const dirty = Object.keys(ed).length>0;
+                  return (
+                    <tr key={ing.id} className={isLow?"low":""}>
+                      <td data-label="Ingredient"><strong style={{fontWeight:500}}>{ing.name}</strong></td>
+                      <td data-label="Qty (g)"><input className="qty-input" type="number" min="0" value={ed.qty??ing.qty} onChange={e=>setEdit(ing.id,"qty",e.target.value)} /></td>
+                      <td data-label={T.threshold}><input className="qty-input" type="number" min="0" value={ed.threshold??ing.threshold} onChange={e=>setEdit(ing.id,"threshold",e.target.value)} /></td>
+                      <td data-label="Status">{isLow?<span className="badge badge-low">{T.low_stock}</span>:<span className="badge badge-ok">OK</span>}</td>
+                      <td className="center">
+                        <div style={{display:"flex",gap:6}}>
+                          <button className="btn-save" style={{padding:"9px 14px",opacity:dirty?1:0.5}} onClick={()=>save(ing)}>{T.save}</button>
+                          <button className="btn-danger" style={{padding:"9px 14px"}} onClick={()=>{if(window.confirm("Delete this ingredient?")) onDelete(ing.id);}}>🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function DeliveryTab({T,delivery,onPatch}) {
+  const [edits,setEdits] = useState({});
+  const [search,setSearch] = useState("");
+  const setEdit = (id,field,val)=>setEdits(e=>({...e,[id]:{...e[id],[field]:val}}));
+  const save = async (d)=>{
+    const ed = edits[d.id];
+    if (!ed) return;
+    const patch = {};
+    if (ed.home!==undefined) patch.home = Number(ed.home)||0;
+    if (ed.stopdesk!==undefined) patch.stopdesk = Number(ed.stopdesk)||0;
+    await onPatch(d.id,patch);
+    setEdits(e=>{const n={...e};delete n[d.id];return n;});
+  };
+  const filtered = delivery.filter(d=>(d.wilaya||"").toLowerCase().includes(search.toLowerCase()));
+  return (
+    <div className="admin-card">
+      <p className="muted" style={{marginBottom:14}}>Change a price, then press Save. Customers see the new price immediately.</p>
+      <div className="search-bar">
+        <input className="search-input" placeholder={T.search} value={search} onChange={e=>setSearch(e.target.value)} />
+      </div>
+      <div style={{overflowX:"auto"}}>
+        <table className="rtable">
+          <thead><tr><th>{T.c_wilaya}</th><th>{T.home_price}</th><th>{T.stop_price}</th><th></th></tr></thead>
+          <tbody>
+            {filtered.map(d=>{
+              const ed = edits[d.id]||{};
+              const dirty = Object.keys(ed).length>0;
+              return (
+                <tr key={d.id}>
+                  <td data-label={T.c_wilaya}><strong style={{fontWeight:500}}>{d.wilaya}</strong></td>
+                  <td data-label={T.home_price}><input className="qty-input" type="number" min="0" value={ed.home??d.home} onChange={e=>setEdit(d.id,"home",e.target.value)} /></td>
+                  <td data-label={T.stop_price}><input className="qty-input" type="number" min="0" value={ed.stopdesk??d.stopdesk} onChange={e=>setEdit(d.id,"stopdesk",e.target.value)} /></td>
+                  <td className="center"><button className="btn-save" style={{padding:"9px 18px",opacity:dirty?1:0.5}} onClick={()=>save(d)}>{T.save}</button></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
