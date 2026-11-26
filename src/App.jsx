@@ -56,7 +56,7 @@ function ProductCard({ p, c }) {
       <div className="pinfo">
         <div className="pcat">{c.catLabel(p)}</div>
         <div className="pname">{pText(p, "name", lang)}</div>
-        <div className="pshort">{pText(p, "short_desc", lang)}</div>
+        <div className="pshort"><Bold text={pText(p, "short_desc", lang)} /></div>
         <div className="pprice">{priceOf(p)}</div>
         <Avail p={p} T={T} />
         <div className="pact" onClick={(e) => e.stopPropagation()}>
