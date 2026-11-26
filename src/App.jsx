@@ -17,6 +17,7 @@ const priceOf = (p) => (
     ? <span><s style={{ color: "var(--muted)", fontSize: "0.85em", marginInlineEnd: 8 }}>{money(toNum(p.price))}</s><span style={{ color: "var(--red)", fontWeight: 600 }}>{money(toNum(p.discount_price))}</span></span>
     : <span>{money(toNum(p.price))}</span>
 );
+const Bold = ({ text }) => String(text || "").split(/(\*\*[^*]+\*\*)/g).map((s, j) => (/^\*\*[^*]+\*\*$/.test(s) ? <strong key={j}>{s.slice(2, -2).trim()}</strong> : s));
 
 function Leaves() {
   const d = <><path d="M20 560C60 400 120 260 250 90" /><path d="M70 440c-30-10-50-35-55-60 30 0 52 20 55 60z" /><path d="M95 360c30-5 55-25 62-55-32 2-58 22-62 55z" /><path d="M130 285c-28-12-42-38-44-62 28 4 46 26 44 62z" /><path d="M170 220c30-3 52-22 60-50-30 0-54 18-60 50z" /><path d="M215 150c-24-14-34-38-34-60 26 6 40 28 34 60z" /></>;
